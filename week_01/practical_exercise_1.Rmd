@@ -186,6 +186,7 @@ y_hat = b_hat[1] + b_hat[2]*x
 
 #Plot
 plot(model)
+abline()
 
 #Plot with abline
 cars_parameters <- tibble(x, y, y_hat)
@@ -193,11 +194,17 @@ cars_parameters %>%
   ggplot(aes(x, y))+
   geom_point()+
   geom_abline(intercept = b_hat[1], slope = b_hat[2])
-
 ```
 
 
 2. estimate $\beta$ for a quadratic model ($y = {\beta}_{2} x^2 + {\beta}_{1} x + {\beta}_{0}$) using ordinary least squares _without_ using __lm__; $\hat{\beta} = {({X}^{T} X)}^{-1} {X}^{T} Y$ (hint: add a third column to $X$ from step 1)
+
+```{r}
+
+
+```
+
+
 3. compare your acquired $\hat{\beta}$ with the output of the corresponding quadratic model created using __lm__ (hint: use the function __I__, see details under help and the sub-section formula operators here: https://www.datacamp.com/community/tutorials/r-formula-tutorial)  
     i. create a plot that illustrates $Y$ and $\hat{Y}$ (if you are feeling ambitious, also include $\epsilon$ (hint: you can use the function __arrows__))  
 
