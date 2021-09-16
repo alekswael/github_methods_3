@@ -13,6 +13,7 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
 ```
 
 # Practical Exercise 1
@@ -177,12 +178,22 @@ summary(model)
     
 
 ```{r}
-x = cbind(1, mtcars$wt)
+# Extracting parameters
+x = mtcars$wt
 y = mtcars$mpg
 b_hat = model$coefficients
-y_hat = x*b_hat
+y_hat = b_hat[1] + b_hat[2]*x
 
-plot(x[2], y_hat[2])
+#Plot
+plot(model)
+
+#Plot with abline
+cars_parameters <- tibble(x, y, y_hat)
+cars_parameters %>% 
+  ggplot(aes(x, y))+
+  geom_point()+
+  geom_abline(intercept = b_hat[1], slope = b_hat[2])
+
 ```
 
 
