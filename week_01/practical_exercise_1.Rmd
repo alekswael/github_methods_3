@@ -167,6 +167,7 @@ REMEMBER: In your report, make sure to include code that can reproduce the answe
 The general linear model: $Y = X \beta + \epsilon$:  
 Do a linear regression, expressing fuel usage as a function of weight using the function __lm__  
 ```{r, eval=FALSE}
+
 data(mtcars)
 model <- lm(mpg ~ wt, data=mtcars)
 
@@ -200,32 +201,134 @@ cars_parameters %>%
 2. estimate $\beta$ for a quadratic model ($y = {\beta}_{2} x^2 + {\beta}_{1} x + {\beta}_{0}$) using ordinary least squares _without_ using __lm__; $\hat{\beta} = {({X}^{T} X)}^{-1} {X}^{T} Y$ (hint: add a third column to $X$ from step 1)
 
 ```{r}
+# Estimate b_hat with function
+X <- cbind(1, x, I(x^2))
+quad_b_hat <- solve(t(X) %*% X) %*% t(X) %*% y
+quad_b_hat
 
+#Doing it this way
+cars_parameters$new_quad_y_hat <- X %*% quad_b_hat
 
+#Doing it this other way
+cars_parameters$quad_y_hat <- quad_b_hat[3]*x^2 + quad_b_hat[2]*x + quad_b_hat[1] 
 ```
-
 
 3. compare your acquired $\hat{\beta}$ with the output of the corresponding quadratic model created using __lm__ (hint: use the function __I__, see details under help and the sub-section formula operators here: https://www.datacamp.com/community/tutorials/r-formula-tutorial)  
     i. create a plot that illustrates $Y$ and $\hat{Y}$ (if you are feeling ambitious, also include $\epsilon$ (hint: you can use the function __arrows__))  
 
+```{r}
+# Comparing with lm
+amodel <- lm(y ~ I(x^2) + x, data = cars_parameters)
+summary(amodel)
+
+# They are same :)
+```
+
+
 ## Exercise 2
 Compare the plotted quadratic fit to the linear fit  
 
-1. which seems better?  
+1. which seems better?
+
+```{r}
+# Plotting linear and quadratic
+ggplot(data = cars_parameters) +
+  geom_smooth(aes(x = x, y = y, colour = "Data"))+
+  geom_smooth(aes(x = x, y = y_hat, colour = "Model"))
+ggplot(data = cars_parameters) +
+  geom_smooth(aes(x = x, y = y, colour = "Data"))+
+  geom_smooth(aes(x = x, y = quad_y_hat, colour = "Model"))
+
+#1. Quad model seems to explain a bit more variance (0.8 compared to 0.7) but is it worth doing? Also the line looks nicer.
+
+```
+
+
 2. calculate the sum of squared errors, (show the calculation based on $\epsilon$). Which fit has the lower sum?  
+
+```{r}
+#2. Calculate SSE.
+
+sse <- sum((fitted(model) - mtcars$mpg)^2)
+sse
+sse_quad <- sum((fitted(amodel) - mtcars$mpg)^2)
+sse_quad
+
+sse_quad/sse*100
+
+# So SSE is around 30% smaller in quad model than in the regular model.
+```
+
 3. now make a cubic fit ($y = {\beta}_{3} x^3 + {\beta}_{2} x^2 + {\beta}_{1} x + {\beta}_{0}$) and compare it to the quadratic fit  
     i. create a plot that illustrates $Y$ and $\hat{Y}$ for both the cubic and the quadratic fits (plot them in the same plot)  
     ii. compare the sum of squared errors  
-    iii. what's the estimated value of the "cubic" (${\beta}_3$) parameter? Comment on this!  
+    iii. what's the estimated value of the "cubic" (${\beta}_3$) parameter? Comment on this!
+    
+
+```{r}
+#3. Cubic fits.
+
+# First we build a cubic model. We do that by cubing the predictor(which is weight in this case) and adding that to the OG dataframe.
+mtcars$wt2 = c(mtcars$wt^2)
+mtcars$wt3 = c(mtcars$wt^3)
+
+#No we build the same lm() but using the squared predictor instead.
+cubic_model = lm(mpg ~ wt3 + wt2 + wt, data = mtcars)
+summary(cubic_model)
+
+#The R-squared is actually less. And it gives me no significance? That's funny?
+
+#3.1 Plotting Y and Y star again in the same dataframe.
+
+# And now we do exercise 1 all over again, to plot Y against Y star in this new model. 
+
+# First we get the design matrix from the new model.
+cubic_design_matrix = model.matrix(cubic_model)
+cubic_y_hat = cubic_design_matrix %*% coef(cubic_model)
+
+# Make a new tibble and then plot it.
+df_all = tibble(x = mtcars$wt2, y = mtcars$mpg, quad_y_hat = cars_parameters$quad_y_hat, cubic_y_hat = cubic_y_hat)
+ggplot(data = df_all) +
+  geom_smooth(aes(x = x, y = y, colour = "Data"))+
+  geom_smooth(aes(x = x, y = quad_y_hat, colour = "Quad")) +
+  geom_smooth(aes(x = x, y = cubic_y_hat, colour = "Cubic"))
+
+
+#3.2 Now comparing the sum of squared errors.
+sse_cubic <- sum((fitted(cubic_model) - mtcars$mpg)^2)
+sse_cubic
+sse_quad
+sse
+
+# Oh it's actually a tiny-tiny bit less(for the cubic model).
+
+#3.3
+
+# Estimate b_hat with function
+cubic_model_matrix <- model.matrix(cubic_model)
+coef(cubic_model)
+
+```
+
 4. bonus question: which summary statistic is the fitted value (_Intercept_ or ${\beta}_0$ in $y = {\beta}_0$) below identical to?
 ```{r, echo=FALSE}
 lm(mpg ~ 1, data=mtcars)
 ```
 ## Exercise 3
 Doing a logistic regression - estimating the probability that a car has automatic transmission (0) or manual transmission (1) based on its weight
-```{r, eval=FALSE}
-data(mtcars)
-logistic.model <- glm(formula=..., data=..., family='binomial)
+
+```{r}
+# Making the logistic model
+logistic.model <- glm(am ~ wt, data=mtcars, family="binomial")
+summary(logistic.model)
+
+# Making predictions based on model
+mtcars_predict <- cbind(mtcars, predict = predict(logistic.model, type = "response"))
+head(mtcars_predict)
+
+# Plotting predictions to get sigmoid
+ggplot(mtcars_predict, aes(wt, predict))+
+  geom_point()
 ```
 
 Probabilities live on the range $(0, 1)$ - using the so-called logit function as a "link-function" we can map these onto the range $(-\infty, \infty)$, i.e. the real numbers.  
@@ -235,16 +338,34 @@ It is helpful to define the logit function and its inverse function for the foll
 
 ```{r}
 logit <-     function(x) log(x / (1 - x))
+plot(logit)
 inv.logit <- function(x) exp(x) / (1 + exp(x))
+plot(inv.logit)
 ```
+
 
 1. plot the fitted values for __logistic.model__:  
     i. what is the relation between the __linear.predictors__ and the __fitted_values__ of the __logistic.model__ object?
+
+```{r}
+# Inv.logit method (linear.predictors)
+lp <- inv.logit(logistic.model$coefficients[2]*x + logistic.model$coefficients[1])
+plot(mtcars$wt, lp)
+
+# Using fitted function
+fv <- fitted(logistic.model)
+plot(mtcars$wt, fv)
+
+# Compare
+```
+
+
 2. plot the logistic function, you've estimated based on your $\hat{\beta}$, (not just the fitted values). Use an _xlim_ of (0, 7)
     i. what's the interpretation of the estimated $\hat{\beta}_0$ (the _Intercept_)
     ii. calculate the estimated probability that the Pontiac Firebird has automatic transmission, given its weight
     iii. bonus question - plot the logistic function and highlight all the cars where we guessed wrongly, if we used the following "quantizer" function:
     
+        
 \begin{equation}
   transmission_{guess}=
   \begin{cases}
@@ -252,11 +373,35 @@ inv.logit <- function(x) exp(x) / (1 + exp(x))
     0 (automatic), & \text{otherwise}
   \end{cases}
 \end{equation}    
-    
+
+```{r}
+# 2.1 Plot linear predictors (Not using xlim because all values are within the range and im lazy)
+plot(mtcars$wt, logistic.model$coefficients[2]*mtcars$wt + logistic.model$coefficients[1])
+plot(mtcars$wt, lp)
+
+
+# 2.2
+mtcars_predict %>% 
+  filter(rownames(mtcars_predict) == "Pontiac Firebird") %>% 
+  select(predict)
+```
+
 3. plot quadratic fit alongside linear fit  
     i. judging visually, does adding a quadratic term make a difference?
     ii. check the details in the help of the AIC function - which of the models provide the better fit according to the AIC values and the residual deviance respectively?
     iii. in your own words, why might it be good to penalise a model like the quadratic model, we just fitted.
+
+
+```{r}
+# 3.1
+# No not really, or at least i can't tell the difference.
+
+#3.2
+
+
+```
+
+
     
 # Next time
 We are going to looking at extending our models with so called random effects. We need to install the package "lme4" for this. Run the code below or install it from your package manager (Linux)  
