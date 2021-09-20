@@ -165,10 +165,11 @@ REMEMBER: In your report, make sure to include code that can reproduce the answe
 
 ## Exercise 1
 The general linear model: $Y = X \beta + \epsilon$:  
-Do a linear regression, expressing fuel usage as a function of weight using the function __lm__  
-```{r, eval=FALSE}
+Do a linear regression, expressing fuel usage as a function of weight using the function __lm__
 
+```{r}
 data(mtcars)
+
 model <- lm(mpg ~ wt, data=mtcars)
 
 summary(model)
@@ -185,26 +186,30 @@ y = mtcars$mpg
 b_hat = model$coefficients
 y_hat = b_hat[1] + b_hat[2]*x
 
-#Plot
-plot(model)
-abline()
-
 #Plot with abline
 cars_parameters <- tibble(x, y, y_hat)
 cars_parameters %>% 
   ggplot(aes(x, y))+
+  geom_segment(aes(xend = x, yend = y_hat)) +
   geom_point()+
-  geom_abline(intercept = b_hat[1], slope = b_hat[2])
+  geom_point(aes(y = y_hat), shape = 1)
+
+# LINK TO SELF TO MAKE RESIDUAL PLOTS
+# https://drsimonj.svbtle.com/visualising-residuals
 ```
 
 
 2. estimate $\beta$ for a quadratic model ($y = {\beta}_{2} x^2 + {\beta}_{1} x + {\beta}_{0}$) using ordinary least squares _without_ using __lm__; $\hat{\beta} = {({X}^{T} X)}^{-1} {X}^{T} Y$ (hint: add a third column to $X$ from step 1)
 
 ```{r}
-# Estimate b_hat with function
+#Estimate b_hat with function
+
+#Design matrix
 X <- cbind(1, x, I(x^2))
+
+#Solve to get 
 quad_b_hat <- solve(t(X) %*% X) %*% t(X) %*% y
-quad_b_hat
+head(quad_b_hat)
 
 #Doing it this way
 cars_parameters$new_quad_y_hat <- X %*% quad_b_hat
@@ -235,11 +240,12 @@ Compare the plotted quadratic fit to the linear fit
 ggplot(data = cars_parameters) +
   geom_smooth(aes(x = x, y = y, colour = "Data"))+
   geom_smooth(aes(x = x, y = y_hat, colour = "Model"))
+
 ggplot(data = cars_parameters) +
   geom_smooth(aes(x = x, y = y, colour = "Data"))+
   geom_smooth(aes(x = x, y = quad_y_hat, colour = "Model"))
 
-#1. Quad model seems to explain a bit more variance (0.8 compared to 0.7) but is it worth doing? Also the line looks nicer.
+#1. Quad model seems to explain a bit more variance (0.8 compared to 0.7).
 
 ```
 
@@ -268,12 +274,13 @@ sse_quad/sse*100
 ```{r}
 #3. Cubic fits.
 
-# First we build a cubic model. We do that by cubing the predictor(which is weight in this case) and adding that to the OG dataframe.
+# First we build a cubic model. We do that by cubing the predictor(which is weight in this case) and adding that to the dataframe.
+# Also doing this to the quadratic for good measure.
 mtcars$wt2 = c(mtcars$wt^2)
 mtcars$wt3 = c(mtcars$wt^3)
 
 #No we build the same lm() but using the squared predictor instead.
-cubic_model = lm(mpg ~ wt3 + wt2 + wt, data = mtcars)
+cubic_model <- lm(mpg ~ wt3 + wt2 + wt, data = mtcars)
 summary(cubic_model)
 
 #The R-squared is actually less. And it gives me no significance? That's funny?
@@ -283,11 +290,11 @@ summary(cubic_model)
 # And now we do exercise 1 all over again, to plot Y against Y star in this new model. 
 
 # First we get the design matrix from the new model.
-cubic_design_matrix = model.matrix(cubic_model)
-cubic_y_hat = cubic_design_matrix %*% coef(cubic_model)
+cubic_design_matrix <- model.matrix(cubic_model)
+cubic_y_hat <- cubic_design_matrix %*% coef(cubic_model)
 
 # Make a new tibble and then plot it.
-df_all = tibble(x = mtcars$wt2, y = mtcars$mpg, quad_y_hat = cars_parameters$quad_y_hat, cubic_y_hat = cubic_y_hat)
+df_all <- tibble(x = mtcars$wt2, y = mtcars$mpg, quad_y_hat = cars_parameters$quad_y_hat, cubic_y_hat = cubic_y_hat)
 ggplot(data = df_all) +
   geom_smooth(aes(x = x, y = y, colour = "Data"))+
   geom_smooth(aes(x = x, y = quad_y_hat, colour = "Quad")) +
@@ -356,7 +363,7 @@ plot(mtcars$wt, lp)
 fv <- fitted(logistic.model)
 plot(mtcars$wt, fv)
 
-# Compare
+# Linear predictors are one inv.logit away of the probabilities, which are also the fitted values (on the log-odds scale).
 ```
 
 
@@ -380,10 +387,14 @@ plot(mtcars$wt, logistic.model$coefficients[2]*mtcars$wt + logistic.model$coeffi
 plot(mtcars$wt, lp)
 
 
-# 2.2
-mtcars_predict %>% 
+# 2.2 Filtering the Firebird. 
+firebird <- mtcars_predict %>% 
   filter(rownames(mtcars_predict) == "Pontiac Firebird") %>% 
   select(predict)
+
+firebird$predict
+
+# Based on the model, there's a 0.031 probability of the Pontiac Firebird having manual transmission based on its weight.
 ```
 
 3. plot quadratic fit alongside linear fit  
@@ -394,11 +405,25 @@ mtcars_predict %>%
 
 ```{r}
 # 3.1
-# No not really, or at least i can't tell the difference.
+# Making model
+logistic.model_q <- glm(am ~ wt2 + wt, data = mtcars, family="binomial") # Making the quadratic logistic model
+
+ggplot(mtcars, aes(x = wt, y = mpg)) +
+  geom_point() +
+  geom_smooth(method = "lm", aes(color = "linear"), se = FALSE) +
+  geom_smooth(method = "lm", formula = y ~ x + I(x^2), aes(color = "quadratic"), se = FALSE) +
+  theme_bw()
+
+# No not really, not quite sure on the interpretation here.
 
 #3.2
+# Comparing the logistic model to the quadratic logistic model
+AIC(logistic.model, logistic.model_q)
 
+#Quite small difference, but model without the quadratic term seems better.
 
+#3.3
+# Maybe there is sort of a slippery slope argument to be made, where if you can just keep adding terms you risk overfitting?
 ```
 
 
