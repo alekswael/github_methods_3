@@ -1,0 +1,125 @@
+---
+title: "Linear mixed effects models"
+author: "Aleksander Wael"
+date: "9/21/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+pacman::p_load(lme4)
+library(tidyverse, lme4)
+```
+
+# Tutorial Part 1: Linear modeling
+
+# Modelling pitch and sex
+
+```{r}
+pitch = c(233,204,242,130,112,142)
+sex = c(rep("female",3),rep("male",3))
+```
+
+# Make the df
+
+```{r}
+my.df <- tibble(sex, pitch)
+head(my.df)
+```
+
+# Make linear model
+
+```{r}
+xmdl = lm(pitch ~ sex, my.df)
+summary(xmdl)
+```
+# Checking that intercept is in fact the mean because there is only two categories
+
+```{r}
+mean(my.df[my.df$sex=="female",]$pitch)
+```
+# Doing same thing but with continuos data
+
+```{r}
+age = c(14,23,35,48,52,67)
+pitch = c(252,244,240,233,212,204)
+my.df = tibble(age,pitch)
+xmdl = lm(pitch ~ age, my.df)
+summary(xmdl)
+```
+
+# Intercept isn't meaningful (you don't have a voice pitch at age 0). Centering variable around mean.
+
+```{r}
+my.df$age.c = my.df$age - mean(my.df$age)
+xmdl = lm(pitch ~ age.c, my.df)
+summary(xmdl)
+```
+
+# Making residual plot
+
+```{r}
+plot(fitted(xmdl),residuals(xmdl))
+```
+
+# Checking assumptions
+# (1) Linearity (that the two variables are in fact linear, check visually and with residuals)
+# (2) Absence of collinearity (dont know how to check, maybe visually?)
+# (3) Homoskedasticity (same variance of residuals, please)
+# (4) Normality of residuals (histogram of residuals)
+# (5) Absence of influential data points (leave-one-out, how influential is each data point for my model)
+# (6) Independence !!!!!!! (A coin flip is independent from the result of the next coin flip, no learning effects etc.)
+
+
+```{r}
+# Using par() to show both plots, just to check if the qq norm is same in both plots
+par(plot(xmdl), qqnorm(residuals(xmdl)), hist(residuals(xmdl)))
+```
+
+# Checking absence of influential data points
+# This is actually easy leave-one-out!
+
+```{r}
+dfbeta(xmdl)
+```
+
+# Part 2: A very basic tutorial for performing linear mixed effects analyses
+
+```{r}
+# Load data
+politeness <- read.csv("http://www.bodowinter.com/tutorial/politeness_data.csv")
+view(politeness)
+```
+
+```{r}
+# See NA (dont have to remove for mixed effects model)
+which(is.na(politeness)==T)
+```
+
+```{r}
+# Boxplot to see differences by varbiables
+boxplot(frequency ~ attitude*gender, col=c("white","lightgray"),politeness)
+```
+
+```{r}
+# Modelling with mixed and random effects
+# REML = FALSE gives info about model explanation power
+politeness.model <- lmer(frequency ~ attitude + gender + (1|subject) + (1|scenario), data=politeness, REML = FALSE)
+summary(politeness.model)
+
+# Making another model (one without attitude) to see if my fixed effects differ
+politeness.null <- lmer(frequency ~ gender + (1|subject) + (1|scenario), data=politeness, REML=FALSE)
+
+# Comparing the models
+anova(politeness.null,politeness.model)
+
+# We see a significant difference os the models, so the attitude has an effect
+```
+
+```{r}
+# Modelling random slopes
+politeness.model = lmer(frequency ~ attitude + gender + (1+attitude|subject) + (1+attitude|scenario), data=politeness, REML=FALSE)
+
+coef(politeness.model)
+```
+
