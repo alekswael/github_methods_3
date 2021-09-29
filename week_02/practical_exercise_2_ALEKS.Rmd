@@ -1,6 +1,6 @@
 ---
 title: "practical_exercise_2, Methods 3, 2021, autumn semester"
-author: '[FILL IN YOUR NAME]'
+author: 'Aleksander M. Wael'
 date: "[FILL IN THE DATE]"
 output: pdf_document
 ---
@@ -13,8 +13,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-pacman::p_load(car)
-library(tidyverse, lme4)
+pacman::p_load(car, lme4, lmerTest, tidyverse)
 ```
 
 # Assignment 1: Using mixed effects modelling to model hierarchical data
@@ -124,8 +123,8 @@ ggplot(data = politeness, aes(x = scenario, y = f0mn, color = attitude)) +
 
 ## Exercise 2  - comparison of models
 
-For this part, make sure to have `lme4` installed.  
-You can install it using `install.packages("lme4")` and load it using `library(lme4)`  
+For this part, make sure to have `lmerTest` installed.  
+You can install it using `install.packages("lmerTest")` and load it using `library(lmerTest)`  
 `lmer` is used for multilevel modelling
 
 ```{r, eval=FALSE}
@@ -139,24 +138,29 @@ example.formula <- formula(dep.variable ~ first.level.variable + (1 | second.lev
 
 ```{r}
 m1 <- lm(f0mn ~ gender, data = politeness)
+summary(m1)
 ```
 
     ii. a two-level model that adds a second level on top of i. where unique intercepts are modelled for each _scenario_
 
 ```{r}
-m2 <- lme4::lmer(f0mn ~ gender + (1|scenario), data = politeness, REML = FALSE)
+m2 <- lmerTest::lmer(f0mn ~ gender + (1|scenario), data = politeness, REML = FALSE)
+summary(m2)
+summary(lmerTest::lmer(f0mn ~ gender + (1|scenario), data = politeness, REML = FALSE))
 ```
 
     iii. a two-level model that only has _subject_ as an intercept 
 
 ```{r}
-m3 <- lme4::lmer(f0mn ~ gender + (1|subject), data = politeness, REML = FALSE)
+m3 <- lmerTest::lmer(f0mn ~ gender + (1|subject), data = politeness, REML = FALSE)
+summary(m3)
 ```
 
     iv. a two-level model that models intercepts for both _scenario_ and _subject_
 
 ```{r}
-m4 <- lme4::lmer(f0mn ~ gender + (1|scenario) + (1|subject), data = politeness, REML = FALSE)
+m4 <- lmerTest::lmer(f0mn ~ gender + (1|scenario) + (1|subject), data = politeness, REML = FALSE)
+summary(m4)
 ```
 
     v. which of the models has the lowest residual standard deviation, also compare the Akaike Information Criterion `AIC`?
@@ -199,6 +203,7 @@ politeness2 <- politeness %>%
 ```{r}
 # Building new model
 m5 <- lm(mean_of_f0mn ~ gender, data = politeness2)
+summary(m5)
 ```
 
     iii. make Quantile-Quantile plots, comparing theoretical quantiles to the sample quantiles) using `qqnorm` and `qqline` for the new single-level model and compare it to the old single-level model (from 1).i). Which model's residuals ($\epsilon$) fulfil the assumptions of the General Linear Model better?)
@@ -208,12 +213,17 @@ par(car::qqPlot(m1), car::qqPlot(m5))
 tibble(sigma(m1), sigma(m5))
 ```
 
+The 
+
     iv. Also make a quantile-quantile plot for the residuals of the  multilevel model with two intercepts. Does it look alright?
 
 ```{r}
+# Plotting both qq plot and histogram of residuals
 car::qqPlot(resid(m4))
 hist(resid(m4))
 ```
+
+The residuals are a bit right-skewed, but it does look alright.
 
 3) Plotting the two-intercepts model
     i. Create a plot for each subject, (similar to part 3 in Exercise 1), this time also indicating the fitted value for each of the subjects for each for the scenarios (hint use `fixef` to get the "grand effects" for each gender and `ranef` to get the subject- and scenario-specific effects)
@@ -226,7 +236,8 @@ lme4::fixef(m4)
 ggplot(data = politeness, aes(x = scenario, y = f0mn, color = attitude)) +
   geom_point() +
   geom_point(aes(x = scenario, y = fitted(m4)), color = "black", shape = 18)+
-  facet_wrap(~subject)
+  facet_wrap(~subject)+
+  theme_bw()
 ```
 
     
@@ -236,20 +247,21 @@ ggplot(data = politeness, aes(x = scenario, y = f0mn, color = attitude)) +
     i. now build a model that has _attitude_ as a main effect besides _gender_
 
 ```{r}
-m6 <- lme4::lmer(f0mn ~ gender + attitude + (1|scenario) + (1|subject), data = politeness, REML = FALSE)
+m6 <- lmerTest::lmer(f0mn ~ gender + attitude + (1|scenario) + (1|subject), data = politeness, REML = FALSE)
+summary(m6)
 ```
 
     ii. make a separate model that besides the main effects of _attitude_ and _gender_ also include their interaction
 
 ```{r}
-m7 <- lme4::lmer(f0mn ~ gender * attitude + (1|scenario) + (1|subject), data = politeness, REML = FALSE)
+m7 <- lmerTest::lmer(f0mn ~ gender * attitude + (1|scenario) + (1|subject), data = politeness, REML = FALSE)
 summary(m7)
 ```
 
     iii. describe what the interaction term in the model says about Korean men's pitch when they are polite relative to Korean women's pitch when they are polite (you don't have to judge whether it is interesting) 
 
 ```{r}
-#
+# The model describes that, although pitch decreases in the polite attitude compared to the informal attitude, Korean men's pitch seem (in our sample) to decrease less than women's pitch, though the interaction is not significant. 
 ```
 
 2) Compare the three models (1. gender as a main effect; 2. gender and attitude as main effects; 3. gender and attitude as main effects and the interaction between them. For all three models model unique intercepts for _subject_ and _scenario_) using residual variance, residual standard deviation and AIC.
@@ -260,8 +272,34 @@ anova(m4, m6, m7)
 ```
 
 3)  Choose the model that you think describe the data the best - and write a short report on the main findings based on this model. At least include the following:
+
   i. describe what the dataset consists of  
   ii. what can you conclude about the effect of gender and attitude on pitch (if anything)?  
   iii. motivate why you would include separate intercepts for subjects and scenarios (if you think they should be included)  
   iv. describe the variance components of the second level (if any)  
-  v. include a Quantile-Quantile plot of your chosen model  
+  v. include a Quantile-Quantile plot of your chosen model
+  
+# Findings based on politeness dataset by Winter & Grawunder
+
+### Note on data
+This dataset was collected to study the phonetic profile of Korean formal and informal speech registers (Winter & Grawunder, 2012). The dataset includes variables of: "Subject" - the anonymized participant ID; "Gender" - the gender of the participant, either F (female) or M (male); "Scenario" - categorized as 7 different scenarios of dialogue, labeled 1-7; "Attitude" - the attitude of the scenario, either formal or informal; "Total duration" - duration of the scenario; "f0mn" - the mean pitch of the participants voice in a scenario and "hiss_count" - how many hisses the subject utters during the scenario.
+
+### Building the model
+The variable of interest in the paper is mean pitch (f0mn), and I'd like to monitor the changes (if any) in this variable. Therefore, it is the outcome variable of my model. Since it is established that pitch is highly correlated to biological sex, I have included gender as a main (fixed) effect. As the original paper hypothesized about pitch differences in formal and informal settings, attitude should of course also be included as a main effect. Furthermore, it is likely that subject have varying baseline pitch frequencies, which is the case for adding a random intercepts per subject. The same goes for the variable scenario, which indicates the situation in which the dialogue exchange takes place. The input in R then becomes f0mn ~ gender + attitude + (1 | scenario) + (1 | subject). The main effects are both significant at p < 0.05, and the model also has the lowest AIC value of all tested models. There could be a case for adding the interaction between gender and attitude, as one might hypothesize whether there's a difference in degree of pitch change between men and women across attitude, though this was tested and yielded a weaker model with no significant effect of the interaction and a higher AIC value, and as also not particularly relevant to the study.
+
+### Checking assumptions of normality of residuals
+```{r}
+qqnorm(resid(m6))
+hist(resid(m6))
+```
+
+The residuals follow a somewhat normal distribution, with a slight right skew (positive skew).
+
+### Results from model
+The predictor "gender" has a significant effect (p < 0.05) on mean pitch, showing a decrease from 254.41 Hz for women to 138.96 Hz for men. In comparing polite and informal speech, there is a 14.82 Hz reduction in mean pitch going from the informal to the polite condition (p < 0.05).
+
+```{r}
+# Running anova to quickly compare AIC values
+anova(m2, m1, m3, m4, m6, m7)
+summary(m6)
+```
