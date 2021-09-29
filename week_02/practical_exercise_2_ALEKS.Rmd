@@ -42,17 +42,15 @@ REMEMBER: This assignment will be part of your final portfolio
 
 1) Describe the dataset, such that someone who happened upon this dataset could understand the variables and what they contain
 
-```{r}
-# Data comes from an experiment in which researches are interested in differences of voice pitch in formal and informal settings.
-# The dataset contains 224 observations with 7 variables to describe the data. These variables are labeled:
-# - Subject: The anonymized participant ID.
-# - Gender: The gender of the participant, either F (female) or M (male).
-# - Scenario: Categorized as 7 different scenarios of dialogue, labeled 1-7.
-# - Attitude: The attitude of the scenario, either formal or informal.
-# - Total duration: Duration of the scenario.
-# - f0mn: The mean pitch of the participants voice in a scenario.
-# - hiss_count: How many hisses the subject utters during the scenario.
-```
+Data comes from an experiment in which researches are interested in differences of voice pitch in formal and informal settings.
+The dataset contains 224 observations with 7 variables to describe the data. These variables are labeled:
+  - Subject: The anonymized participant ID.
+  - Gender: The gender of the participant, either F (female) or M (male).
+  - Scenario: Categorized as 7 different scenarios of dialogue, labeled 1-7.
+  - Attitude: The attitude of the scenario, either formal or informal.
+  - Total duration: Duration of the scenario.
+  - f0mn: The mean pitch of the participants voice in a scenario.
+  - hiss_count: How many hisses the subject utters during the scenario.
 
 
   i. Also consider whether any of the variables in _politeness_ should be encoded as factors or have the factor encoding removed. Hint: ```?factor```
@@ -69,6 +67,8 @@ politeness$hiss_count <- as.numeric(politeness$hiss_count)
 
 summary(lm(total_duration ~ attitude, data = politeness))
 ```
+
+I encode the first 4 variables as factors because i want to treat them as
 
 2) Create a new data frame that just contains the subject _F1_ and run two linear models; one that expresses _f0mn_ as dependent on _scenario_ as an integer; and one that expresses _f0mn_ as dependent on _scenario_ encoded as a factor
 
@@ -281,11 +281,11 @@ anova(m4, m6, m7)
   
 # Findings based on politeness dataset by Winter & Grawunder
 
-### Note on data
+### Note on dataset
 This dataset was collected to study the phonetic profile of Korean formal and informal speech registers (Winter & Grawunder, 2012). The dataset includes variables of: "Subject" - the anonymized participant ID; "Gender" - the gender of the participant, either F (female) or M (male); "Scenario" - categorized as 7 different scenarios of dialogue, labeled 1-7; "Attitude" - the attitude of the scenario, either formal or informal; "Total duration" - duration of the scenario; "f0mn" - the mean pitch of the participants voice in a scenario and "hiss_count" - how many hisses the subject utters during the scenario.
 
 ### Building the model
-The variable of interest in the paper is mean pitch (f0mn), and I'd like to monitor the changes (if any) in this variable. Therefore, it is the outcome variable of my model. Since it is established that pitch is highly correlated to biological sex, I have included gender as a main (fixed) effect. As the original paper hypothesized about pitch differences in formal and informal settings, attitude should of course also be included as a main effect. Furthermore, it is likely that subject have varying baseline pitch frequencies, which is the case for adding a random intercepts per subject. The same goes for the variable scenario, which indicates the situation in which the dialogue exchange takes place. The input in R then becomes f0mn ~ gender + attitude + (1 | scenario) + (1 | subject). The main effects are both significant at p < 0.05, and the model also has the lowest AIC value of all tested models. There could be a case for adding the interaction between gender and attitude, as one might hypothesize whether there's a difference in degree of pitch change between men and women across attitude, though this was tested and yielded a weaker model with no significant effect of the interaction and a higher AIC value, and as also not particularly relevant to the study.
+The variable of interest in the paper is mean pitch (f0mn), and I'd like to monitor the changes (if anyin) in this variable. Therefore, it is the outcome variable of my model. Since it is established that pitch is highly correlated to biological sex, I have included gender as a main (fixed) effect. As the original paper hypothesized about pitch differences in formal and informal settings, attitude should of course also be included as a main effect. Furthermore, it is likely that subject have varying baseline pitch frequencies, which is the case for adding a random intercepts per subject. The same goes for the variable scenario, which indicates the situation in which the dialogue exchange takes place. The input in R then becomes f0mn ~ gender + attitude + (1 | scenario) + (1 | subject). The main effects are both significant at p < 0.05, and the model also has the lowest AIC value of all tested models. There could be a case for adding the interaction between gender and attitude, as one might hypothesize whether there's a difference in degree of pitch change between men and women across attitude, though this was tested and yielded a weaker model with no significant effect of the interaction and a higher AIC value, and as also not particularly relevant to the study.
 
 ### Checking assumptions of normality of residuals
 ```{r}
@@ -296,7 +296,7 @@ hist(resid(m6))
 The residuals follow a somewhat normal distribution, with a slight right skew (positive skew).
 
 ### Results from model
-The predictor "gender" has a significant effect (p < 0.05) on mean pitch, showing a decrease from 254.41 Hz for women to 138.96 Hz for men. In comparing polite and informal speech, there is a 14.82 Hz reduction in mean pitch going from the informal to the polite condition (p < 0.05).
+The predictor "gender" has a significant effect (p < 0.05) on mean pitch, showing a decrease from 254.41 Hz for women to 138.96 Hz for men. In comparing polite and informal speech, there is a 14.82 Hz reduction in mean pitch going from the informal to the polite condition (p < 0.05). We also see the random intercepts explaining a good amount of the variance in the dataset (515), especially random intercepts by subject.
 
 ```{r}
 # Running anova to quickly compare AIC values
