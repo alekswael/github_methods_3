@@ -1,8 +1,11 @@
 ---
 title: "practical_exercise_2, Methods 3, 2021, autumn semester"
-author: 'Aleksander M. Wael'
-date: "[FILL IN THE DATE]"
-output: pdf_document
+author: "Aleksander M. Wael"
+date: "29/09/2021"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
 <style type="text/css">
@@ -44,13 +47,13 @@ REMEMBER: This assignment will be part of your final portfolio
 
 Data comes from an experiment in which researches are interested in differences of voice pitch in formal and informal settings.
 The dataset contains 224 observations with 7 variables to describe the data. These variables are labeled:
-  - Subject: The anonymized participant ID.
-  - Gender: The gender of the participant, either F (female) or M (male).
-  - Scenario: Categorized as 7 different scenarios of dialogue, labeled 1-7.
-  - Attitude: The attitude of the scenario, either formal or informal.
-  - Total duration: Duration of the scenario.
-  - f0mn: The mean pitch of the participants voice in a scenario.
-  - hiss_count: How many hisses the subject utters during the scenario.
+- Subject: The anonymized participant ID.
+- Gender: The gender of the participant, either F (female) or M (male).
+- Scenario: Categorized as 7 different scenarios of dialogue, labeled 1-7.
+- Attitude: The attitude of the scenario, either formal or informal.
+- Total duration: Duration of the scenario.
+- f0mn: The mean pitch of the participants voice in a scenario.
+- hiss_count: How many hisses the subject utters during the scenario.
 
 
   i. Also consider whether any of the variables in _politeness_ should be encoded as factors or have the factor encoding removed. Hint: ```?factor```
@@ -100,9 +103,9 @@ model.matrix(model_as_factor)
 
   ii. Which coding of _scenario_, as a factor or not, is more fitting?
   
-```{r}
-# We are interested in treating each scenario as separate entities that aren't ranked based on their namings, i.e. scenario 7 is not larger than scenario 5; it is simply a different condition to compare to.
-```
+
+We are interested in treating each scenario as separate entities that aren't ranked based on their namings,
+i.e. scenario 7 is not larger than scenario 5; it is simply a different condition to compare to.
 
 
 3) Make a plot that includes a subplot for each subject that has _scenario_ on the x-axis and _f0mn_ on the y-axis and where points are colour coded according to _attitude_
@@ -117,9 +120,7 @@ ggplot(data = politeness, aes(x = scenario, y = f0mn, color = attitude)) +
 
   i. Describe the differences between subjects
   
-```{r}
-
-```
+Some subjects have greater differences between attitude conditions, and the baseline f0mn also appears to be varying.
 
 ## Exercise 2  - comparison of models
 
@@ -176,17 +177,11 @@ anova(m2, m1, m3, m4)
 
     vi. which of the second-level effects explains the most variance?
 
-```{r}
-
-# We see by comparing residual standard deviation and AIC scores of m2 (intercepts for scenario) and m3 (intercepts for subjects) that random intercepts by subjects explain more variance than scenario. Using only random intercepts by subject as a second-level effect has a lower sigma value (32.04) and AIC score (2112.1) than by scenario.
-
-```
+We see by comparing residual standard deviation and AIC scores of m2 (intercepts for scenario) and m3 (intercepts for subjects) that random intercepts by subjects explain more variance than scenario. Using only random intercepts by subject as a second-level effect has a lower sigma value (32.04) and AIC score (2112.1) than by scenario.
 
 2) Why is our single-level model bad?
 
-```{r}
-# The single level model ignores some important hierarchies in the data which we are well aware of exist. It disregards the fact that subjects might differ on baseline pitch, and that there may be differences across scenarios. Whilst it might explain some of the variance in the data, yes, it is to simple to be a complete answer.
-```
+The single level model ignores some important hierarchies in the data which we are well aware of exist. It disregards the fact that subjects might differ on baseline pitch, and that there may be differences across scenarios. Whilst it might explain some of the variance in the data, yes, it is to simple to be a complete answer.
 
     i. create a new data frame that has three variables, _subject_, _gender_ and _f0mn_, where _f0mn_ is the average of all responses of each subject,
     i.e. averaging across _attitude_ and_scenario_
@@ -213,7 +208,7 @@ par(car::qqPlot(m1), car::qqPlot(m5))
 tibble(sigma(m1), sigma(m5))
 ```
 
-The 
+The QQ-plot of the pooled f0 scores seems better than that of the individual scores. This can also be seen by the lower sigma value for the model with the pooled scores. Although it fulfills the assumptions of the model better, it reduces the resolution of the data by ignoring the difference of f0 between scenarios. 
 
     iv. Also make a quantile-quantile plot for the residuals of the  multilevel model with two intercepts. Does it look alright?
 
@@ -223,15 +218,12 @@ car::qqPlot(resid(m4))
 hist(resid(m4))
 ```
 
-The residuals are a bit right-skewed, but it does look alright.
+The residuals are a bit right-skewed, but it does look alright, perhaps a sleight violation of assumption.
 
 3) Plotting the two-intercepts model
     i. Create a plot for each subject, (similar to part 3 in Exercise 1), this time also indicating the fitted value for each of the subjects for each for the scenarios (hint use `fixef` to get the "grand effects" for each gender and `ranef` to get the subject- and scenario-specific effects)
 
 ```{r}
-lme4::ranef(m4)
-lme4::fixef(m4)
-
 # Plotting
 ggplot(data = politeness, aes(x = scenario, y = f0mn, color = attitude)) +
   geom_point() +
@@ -260,15 +252,15 @@ summary(m7)
 
     iii. describe what the interaction term in the model says about Korean men's pitch when they are polite relative to Korean women's pitch when they are polite (you don't have to judge whether it is interesting) 
 
-```{r}
-# The model describes that, although pitch decreases in the polite attitude compared to the informal attitude, Korean men's pitch seem (in our sample) to decrease less than women's pitch, though the interaction is not significant. 
-```
+The model describes that, although pitch decreases in the polite attitude compared to the informal attitude, Korean men's pitch seem (in our sample) to decrease less than women's pitch, though the interaction is not significant. 
 
 2) Compare the three models (1. gender as a main effect; 2. gender and attitude as main effects; 3. gender and attitude as main effects and the interaction between them. For all three models model unique intercepts for _subject_ and _scenario_) using residual variance, residual standard deviation and AIC.
 
 ```{r}
-# Running anova to quickly compare AIC values
+# Running anova to quickly compare AIC values, making a df for sigmal values and one for SSR
 anova(m4, m6, m7)
+tibble(sigma(m4), sigma(m6), sigma(m7))
+tibble(sum(resid(m4)^2), sum(resid(m6)^2), sum(resid(m7)^2))
 ```
 
 3)  Choose the model that you think describe the data the best - and write a short report on the main findings based on this model. At least include the following:
@@ -293,13 +285,7 @@ qqnorm(resid(m6))
 hist(resid(m6))
 ```
 
-The residuals follow a somewhat normal distribution, with a slight right skew (positive skew).
+The residuals follow a somewhat normal distribution, with a slight right skew (positive skew), which slightly breaks assumptions.
 
 ### Results from model
-The predictor "gender" has a significant effect (p < 0.05) on mean pitch, showing a decrease from 254.41 Hz for women to 138.96 Hz for men. In comparing polite and informal speech, there is a 14.82 Hz reduction in mean pitch going from the informal to the polite condition (p < 0.05). We also see the random intercepts explaining a good amount of the variance in the dataset (515), especially random intercepts by subject.
-
-```{r}
-# Running anova to quickly compare AIC values
-anova(m2, m1, m3, m4, m6, m7)
-summary(m6)
-```
+The predictor "gender" has a significant effect (p < 0.05) on mean pitch, showing a decrease from 254.41 Hz for women to 138.96 Hz for men. In comparing polite and informal speech, there is a 14.82 Hz reduction in mean pitch going from the informal to the polite condition (p < 0.05). We also see the random intercepts explaining a good amount of the variance in the dataset, especially random intercepts by subject (score of 514.9).
