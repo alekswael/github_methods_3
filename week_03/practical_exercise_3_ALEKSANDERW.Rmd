@@ -1,0 +1,91 @@
+---
+title: "practical_exercise_3, Methods 3, 2021, autumn semester"
+author: 'Aleksander Moeslund Wael'
+date: "01/10/2021"
+output: html_document
+---
+
+<style type="text/css">
+  body{
+  font-size: 14pt;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Loading packages
+
+```{r}
+pacman::p_load(tidyverse)
+```
+
+# Exercise 1
+
+## 1. Creating a data frame with all subject data
+
+```{r}
+files <- list.files(path = "experiment_2",         
+                    pattern = ".csv",
+                    full.names = T)
+
+df <- read_csv(files)
+```
+  
+## 2. Describing the data
+  
+  The dataset contains 18131 observations described by 17 variables. Data from 29 subjects is included. 
+
+### 2. i.
+  
+  Adding variable "correct" to display if subject was correct
+  
+```{r}
+# Adding empty variable
+df <- df %>% 
+  mutate(obj.resp.2 = obj.resp)
+
+# Renaming rows in obj.resp.2 to get same units as target.type
+df$obj.resp.2 <- replace(df$obj.resp.2, df$obj.resp.2 == "e", "even")
+df$obj.resp.2 <- replace(df$obj.resp.2, df$obj.resp.2 == "o", "odd")
+
+# Adding value for correct and incorrect answers
+df_correct <- df %>%
+  filter(obj.resp.2 == target.type) %>% 
+  mutate(correct = "1")
+
+# Joining with my df
+df <- left_join(df, df_correct)
+
+# Remaining are NAs, so replace with 0
+df$correct <- replace(df$correct, is.na(df$correct), "0")
+```
+
+### 2. ii. Describe what the following variables in the data frame contain, trial.type, pas, trial, target.contrast, cue, task, target_type, rt.subj, rt.obj, obj.resp, subject and correct. (That means you can ignore the rest of the variables in your description). For each of them, indicate and argue for what class they should be classified into, e.g. factor, numeric etc.
+
+```{r}
+unique(df$trial.type)
+unique(df$pas)
+unique(df$trial)
+unique(df$target.contrast)
+unique(df$cue)
+test <- df %>% 
+  filter(subject == "001", cue == "0")
+unique(test$cue)
+unique(df$task)
+unique(df$target.type)
+```
+
+trial.type: Indicates whether subject is doing the staircase task (first experiment) or the follow-up experiment
+pas: Indicates subjects response to trial on the Perceptual Awareness Scale (PAS)
+trial: A numbered list for every trial the subject completes, i.e. presses e or o in either of the trial types. Per subject.
+target.contrast: The contrast between the background and the digit (target)
+cue: The specific cue pattern
+task: Whether cue pattern is 2,4 or 8 digits
+target.type: Whether target type is an odd or even number
+rt.subj: Reaction time for response to PAS pr. trail.
+rt.obj: Reaction time for responding if target is even or odd
+obj.resp: Subjects response to target is either even or odd
+subject: Participant ID, ordered from 001.
+correct: Whether subject answered correctly in the trail, 1 for correct and 0 for incorrect.
