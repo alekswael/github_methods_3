@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Loading packages
 
 ```{r}
-pacman::p_load(tidyverse)
+pacman::p_load(tidyverse, glmer, lmerTest, lme4)
 ```
 
 # Exercise 1
@@ -64,7 +64,7 @@ df$correct <- replace(df$correct, is.na(df$correct), "0")
 
 ### 2. ii. Describe what the following variables in the data frame contain, trial.type, pas, trial, target.contrast, cue, task, target_type, rt.subj, rt.obj, obj.resp, subject and correct. (That means you can ignore the rest of the variables in your description). For each of them, indicate and argue for what class they should be classified into, e.g. factor, numeric etc.
 
-```{r}
+```{r, EVAL = FALSE}
 unique(df$trial.type)
 unique(df$pas)
 unique(df$trial)
@@ -77,15 +77,70 @@ unique(df$task)
 unique(df$target.type)
 ```
 
-trial.type: Indicates whether subject is doing the staircase task (first experiment) or the follow-up experiment
-pas: Indicates subjects response to trial on the Perceptual Awareness Scale (PAS)
-trial: A numbered list for every trial the subject completes, i.e. presses e or o in either of the trial types. Per subject.
-target.contrast: The contrast between the background and the digit (target)
-cue: The specific cue pattern
-task: Whether cue pattern is 2,4 or 8 digits
-target.type: Whether target type is an odd or even number
-rt.subj: Reaction time for response to PAS pr. trail.
-rt.obj: Reaction time for responding if target is even or odd
-obj.resp: Subjects response to target is either even or odd
-subject: Participant ID, ordered from 001.
-correct: Whether subject answered correctly in the trail, 1 for correct and 0 for incorrect.
+trial.type: Indicates whether subject is doing the staircase task (first experiment) or the follow-up experiment.
+Should be class character, as it is a category.
+pas: Indicates subjects response to trial on the Perceptual Awareness Scale (PAS). Takes a value between 1-4, and will therefore be treated as numeric.
+trial: A numbered list for every trial the subject completes, i.e. presses e or o in either of the trial types., per subject. I should think character class for now (might change).
+target.contrast: The contrast between the background and the digit (target). Between 0-1, treated as numeric.
+cue: The specific cue pattern, will treat as character.
+task: Whether cue pattern is 2 (singles), 4 (pairs) or 8 (quadruplets) digits. Will treat as character.
+target.type: Whether target type is an odd or even number - will treat as character.
+rt.subj: Reaction time for response to PAS pr. trail - will treat as numeric.
+rt.obj: Reaction time for responding if target is even or odd - will treat as numeric.
+obj.resp: Subjects response to target is either even or odd - will treat as character.
+subject: Participant ID, ordered from 001. Treated as character.
+correct: Whether subject answered correctly in the trail, 1 for correct and 0 for incorrect. Is logical (binary)
+
+```{r}
+# Assigning variables to proper class
+df$pas <- as.numeric(df$pas)
+df$trial <- as.character(df$trial)
+df$target.contrast <- as.numeric(df$target.contrast)
+df$cue <- as.character(df$cue)
+df$rt.subj <- as.numeric(df$rt.subj)
+df$rt.obj <- as.numeric(df$rt.obj)
+df$target.contrast <- as.numeric(df$target.contrast)
+df$correct <- as.integer(df$correct)
+df$correct <- as.logical(df$correct)
+```
+
+### 2. iii. for the staircasing part only, create a plot for each subject where you plot the estimated function (on the target.contrast range from 0-1) based on the fitted values of a model (use glm) that models correct as dependent on target.contrast. These plots will be our no-pooling model. Comment on the fits - do we have enough data to plot the logistic functions?
+
+```{r}
+# Making df
+df_staircase <- df %>% 
+  filter(trial.type == "staircase")
+
+# Building model
+m1 <- glm(correct ~ target.contrast, data = df_staircase, family = "binomial")
+
+# Plotting
+df_staircase %>% 
+  ggplot(aes(x = target.contrast, y = fitted(m1), color = correct)) +
+  geom_point() +
+  facet_wrap(~subject)+
+  theme_bw()
+```
+
+### 2.iv. on top of those plots, add the estimated functions (on the target.contrast range from 0-1) for each subject based on partial pooling model (use glmer from the package lme4) where unique intercepts and slopes for target.contrast are modelled for each subject
+
+```{r}
+# Building model
+m2 <- glmer(correct ~ target.contrast + (1 + target.contrast|subject) , data = df_staircase, family = "binomial")
+effects <- ranef(m2)
+effects <- effects$subject
+effects <- rownames_to_column(effects, "subject")
+m2_intercepts <- effects$subject[1]
+m2_slopes <- effects$subject[2]
+
+# Plotting
+df_staircase %>% 
+  ggplot(aes(x = target.contrast, y = fitted(m1), color = correct))+
+  geom_point()+
+  geom_point(aes(x = target.contrast, y = fitted(m2), color = "black"))+
+  geom_abline(data = effects, aes(intercept = `(Intercept)`, slope = target.contrast))+
+  facet_wrap(~subject)+
+  theme_bw()
+```
+
+
