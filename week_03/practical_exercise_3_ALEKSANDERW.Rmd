@@ -20,12 +20,12 @@ knitr::opts_chunk$set(echo = TRUE)
 Loading packages
 
 ```{r}
-pacman::p_load(tidyverse, lmerTest, lme4)
+pacman::p_load(tidyverse, lmerTest, lme4, gridExtra, dfoptim)
 ```
 
 # Exercise 1
 
-## 1. Creating a data frame with all subject data
+## 1. 1. Creating a data frame with all subject data
 
 ```{r}
 files <- list.files(path = "experiment_2",         
@@ -35,13 +35,13 @@ files <- list.files(path = "experiment_2",
 df <- read_csv(files)
 ```
   
-## 2. Describing the data
+## 1. 2. Describing the data
   
-  The dataset contains 18131 observations described by 17 variables. Data from 29 subjects is included. 
+The dataset contains 18131 observations described by 17 variables. Data from 29 subjects is included. Thorough description in next task.
 
-### 2. i.
+### 1. 2. i.
   
-  Adding variable "correct" to display if subject was correct
+Adding variable "correct" to display if subject was correct
   
 ```{r}
 # Adding empty variable
@@ -64,20 +64,7 @@ df <- left_join(df, df_correct)
 df$correct <- replace(df$correct, is.na(df$correct), "0")
 ```
 
-### 2. ii. Describe what the following variables in the data frame contain, trial.type, pas, trial, target.contrast, cue, task, target_type, rt.subj, rt.obj, obj.resp, subject and correct. (That means you can ignore the rest of the variables in your description). For each of them, indicate and argue for what class they should be classified into, e.g. factor, numeric etc.
-
-```{r, EVAL = FALSE}
-unique(df$trial.type)
-unique(df$pas)
-unique(df$trial)
-unique(df$target.contrast)
-unique(df$cue)
-test <- df %>% 
-  filter(subject == "001", cue == "0")
-unique(test$cue)
-unique(df$task)
-unique(df$target.type)
-```
+### 1. 2. ii. Describe what the following variables in the data frame contain, trial.type, pas, trial, target.contrast, cue, task, target_type, rt.subj, rt.obj, obj.resp, subject and correct. (That means you can ignore the rest of the variables in your description). For each of them, indicate and argue for what class they should be classified into, e.g. factor, numeric etc.
 
 trial.type: Indicates whether subject is doing the staircase task (first experiment) or the follow-up experiment.
 Should be class character, as it is a category.
@@ -90,8 +77,8 @@ target.type: Whether target type is an odd or even number - will treat as charac
 rt.subj: Reaction time for response to PAS pr. trail - will treat as numeric.
 rt.obj: Reaction time for responding if target is even or odd - will treat as numeric.
 obj.resp: Subjects response to target is either even or odd - will treat as character.
-subject: Participant ID, ordered from 001. Treated as character.
-correct: Whether subject answered correctly in the trail, 1 for correct and 0 for incorrect. Is logical (binary)
+subject: Participant ID, ordered from 001. Treated as character/factor.
+correct: Whether subject answered correctly in the trail, 1 for correct and 0 for incorrect. Is logical (binary), NOTE: treated as a factor due to an error when conducting analysis.
 
 ```{r}
 # Assigning variables to proper class
@@ -102,52 +89,93 @@ df$cue <- as.character(df$cue)
 df$rt.subj <- as.numeric(df$rt.subj)
 df$rt.obj <- as.numeric(df$rt.obj)
 df$target.contrast <- as.numeric(df$target.contrast)
-df$correct <- as.integer(df$correct)
-df$correct <- as.logical(df$correct)
+df$correct <- as.factor(df$correct)
+df$subject <- as.factor(df$subject)
 ```
 
-### 2. iii. for the staircasing part only, create a plot for each subject where you plot the estimated function (on the target.contrast range from 0-1) based on the fitted values of a model (use glm) that models correct as dependent on target.contrast. These plots will be our no-pooling model. Comment on the fits - do we have enough data to plot the logistic functions?
+### 1. 2. iii. for the staircasing part only, create a plot for each subject where you plot the estimated function (on the target.contrast range from 0-1) based on the fitted values of a model (use glm) that models correct as dependent on target.contrast. These plots will be our no-pooling model. Comment on the fits - do we have enough data to plot the logistic functions?
 
 ```{r}
-# Making df
-df_staircase <- df %>% 
-  filter(trial.type == "staircase")
+# Making a df
+staircase <- df %>% 
+  filter(df$trial.type == 'staircase')
 
-# Building model (complete pooling)
-m1 <- glm(correct ~ target.contrast, data = df_staircase, family = "binomial")
+# Making a function to run a model for each participant
+nopoolfun <- function(i){
+  dat <- staircase[which(staircase$subject == i),] # subsetting the data so it only includes one participant
+  model <- glm(correct ~ target.contrast, family = 'binomial', data = dat) # running a model on the data from one participant
+  fitted <- model$fitted.values # extracting the fitted values
+  plot_dat <- data.frame(cbind(fitted, 'target.contrast' = dat$target.contrast)) # creating a data frame with the variables needed in the plot
+  
+  plot <- ggplot(plot_dat, aes(x = target.contrast, y = fitted))+ # plotting
+    geom_point(color = 'steelblue') +
+    xlab('Target Contrast') +
+    ylab('Predicted') +
+    ylim(c(0,1))+
+    ggtitle(paste0('Participant ', as.character(i))) +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 10), axis.title=element_text(size = 8), axis.text=element_text(size=6))
+  
+  return(plot)
+}
 
-# Plotting
-df_staircase %>% 
-  ggplot(aes(x = target.contrast, y = fitted(m1), color = correct)) +
-  geom_point() +
-  facet_wrap(~subject)+
-  theme_bw()
+# Running the function for every participant (doing it twice so the plots are nicer to look at)
+subjects <- c("001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016")
+plots <- lapply(subjects, FUN=nopoolfun)
+do.call(grid.arrange,  plots)
+subjects <- c("017", "018", "019", "020", "021", "022", "023", "024", "025", "026", "027", "028", "029")
+plots <- lapply(subjects, FUN=nopoolfun)
+do.call(grid.arrange,  plots)
 ```
 
-### 2.iv. on top of those plots, add the estimated functions (on the target.contrast range from 0-1) for each subject based on partial pooling model (use glmer from the package lme4) where unique intercepts and slopes for target.contrast are modelled for each subject
+I should think we have enough data, yes, although no pooling analysis does not inform us about the population.
+
+### 1. 2. iv. on top of those plots, add the estimated functions (on the target.contrast range from 0-1) for each subject based on partial pooling model (use glmer from the package lme4) where unique intercepts and slopes for target.contrast are modelled for each subject
 
 ```{r}
-# Building model (partial-pooling)
-m2 <- glmer(correct ~ target.contrast + (1 + target.contrast|subject) , data = df_staircase, family = "binomial")
-effects <- ranef(m2)
-effects <- effects$subject
-effects <- rownames_to_column(effects, "subject")
-m2_intercepts <- effects$subject[1]
-m2_slopes <- effects$subject[2]
+# Making a df
+staircase <- df %>% 
+  filter(df$trial.type == 'staircase')
 
-# Plotting
-df_staircase %>% 
-  ggplot(aes(x = target.contrast, y = fitted(m1), color = correct))+
-  geom_point()+
-  geom_line(aes(x = target.contrast, y = fitted(m2), color = "black"))+
-  facet_wrap(~subject)+
-  theme_bw()
+# Model with random intercepts and slopes (partial pooling)
+m2 <- glmer(correct ~ target.contrast + (1 + target.contrast | subject), family = 'binomial', data = staircase)
 
+# Making a function to run a model for each participant
+partialpoolfun <- function(i){
+  dat <- staircase[which(staircase$subject == i),] # subsetting the data so it only includes one participant
+  model <- glm(correct ~ target.contrast, family = 'binomial', data = dat) # running a model on the data from one participant
+  fitted <- model$fitted.values # extracting the fitted values
+  plot_dat <- data.frame(cbind(fitted, 'target.contrast' = dat$target.contrast)) # creating a data frame with the variables needed in the plot
+  fitted2 <- fitted.values(m2) # Adding fitted values for partial pooling model
+  plot_dat_2 <- staircase %>% # Subsetting this df also pr subject
+    mutate("fitted.values" = fitted2) %>% 
+    filter(subject == i)
+  
+  plot <- ggplot(plot_dat, aes(x = target.contrast, y = fitted))+ # plotting
+    geom_point(color = 'steelblue') +
+    geom_line(data = plot_dat_2, aes(x = target.contrast, y = fitted.values)) + # THIS IS THE PARTIAL POOLING MODEL
+    xlab('Target Contrast') +
+    ylab('Predicted') +
+    ylim(c(0,1))+
+    ggtitle(paste0('Participant ', as.character(i))) +
+    theme_minimal() +
+    theme(plot.title = element_text(size = 10), axis.title=element_text(size = 8), axis.text=element_text(size=6))
+  
+  return(plot)
+}
+
+# Running the function for every participant
+subjects <- c("001", "002", "003", "004", "005", "006", "007", "008", "009", "010", "011", "012", "013", "014", "015", "016")
+plots <- lapply(subjects, FUN=partialpoolfun)
+do.call(grid.arrange,  plots)
+subjects <- c("017", "018", "019", "020", "021", "022", "023", "024", "025", "026", "027", "028", "029")
+plots <- lapply(subjects, FUN=partialpoolfun)
+do.call(grid.arrange,  plots)
 ```
 
-### 2. v. in your own words, describe how the partial pooling model allows for a better fit for each subject
+### 1. 2. v. in your own words, describe how the partial pooling model allows for a better fit for each subject
 
-Partial pooling allows for the model to be generalizable, but still accounts for subject differences in baseline (intercept) and performance (slopes).
+Partial pooling allows for the model to be generalizable (i.e. "less accurate" fit compared to no pooling), but still accounts for subject differences in baseline (intercept) and performance (slopes).
 
 # Exercise 2
 
@@ -160,14 +188,13 @@ df_experiment <- df %>%
 ### 2. 1. Pick four subjects and plot their Quantile-Quantile (Q-Q) plots for the residuals of their objective response times (rt.obj) based on a model where only intercept is modelled
 
 ```{r}
-df_experiment <- df %>% 
-  filter(trial.type == "experiment")
+# Modelling simple response time
 response_time <- lm(rt.obj ~ 1, data = df_experiment)
 df_experiment$fitted_rt <- fitted(response_time)
 ```
 
 ```{r}
-pacman::p_load(car)
+# Subsetting for each subject
 subject1 <- df_experiment %>% 
   filter(subject == "001")
 subject2 <- df_experiment %>% 
@@ -176,21 +203,27 @@ subject3 <- df_experiment %>%
   filter(subject == "003")
 subject4 <- df_experiment %>% 
   filter(subject == "004")
+
+# Modelling each subject 
 interceptmodel1 <- lm(rt.obj ~ 1, data = subject1)
 interceptmodel2 <- lm(rt.obj ~ 1, data = subject2)
 interceptmodel3 <- lm(rt.obj ~ 1, data = subject3)
 interceptmodel4 <- lm(rt.obj ~ 1, data = subject4)
-qqPlot(interceptmodel1)
-qqPlot(interceptmodel2)
-qqPlot(interceptmodel3)
-qqPlot(interceptmodel4)
+
+# Plotting
+car::qqPlot(interceptmodel1)
+car::qqPlot(interceptmodel2)
+car::qqPlot(interceptmodel3)
+car::qqPlot(interceptmodel4)
 ```
 
 ### 2. 1. i. comment on these
 
+They are all somewhat normally distributed, but not satisfactory as there is heavy skewness in some of the plots and some heavy outliers in the top end mainly.
 
 ### 2. 1. ii. does a log-transformation of the response time data improve the Q-Q-plots?
 ```{r}
+# Log transforming for each subject
 logsubject1 <- subject1 %>% 
   mutate(log_rt = log(rt.obj))
 logsubject2 <- subject2 %>% 
@@ -199,16 +232,21 @@ logsubject3 <- subject3 %>%
   mutate(log_rt = log(rt.obj))
 logsubject4 <- subject4 %>% 
   mutate(log_rt = log(rt.obj))
+
+# Modelling
 loginterceptmodel1 <- lm(log_rt ~ 1, data = logsubject1)
 loginterceptmodel2 <- lm(log_rt ~ 1, data = logsubject2)
 loginterceptmodel3 <- lm(log_rt ~ 1, data = logsubject3)
 loginterceptmodel4 <- lm(log_rt ~ 1, data = logsubject4)
-qqPlot(loginterceptmodel1)
-qqPlot(loginterceptmodel2)
-qqPlot(loginterceptmodel3)
-qqPlot(loginterceptmodel4)
+
+# Plotting
+car::qqPlot(loginterceptmodel1)
+car::qqPlot(loginterceptmodel2)
+car::qqPlot(loginterceptmodel3)
+car::qqPlot(loginterceptmodel4)
 ```
 
+I would say the log transformation reduced the tail sizes (outliers), which betters the distribution for subject 1 and 2. Though distribution for subject 3 is now less optimal.
 
 ### 2. 2. Now do a partial pooling model modelling objective response times as dependent on _task_? (set `REML=FALSE` in your `lmer`-specification) 
 ```{r}
@@ -218,9 +256,17 @@ rt_partialpooling2 <- lmer(rt.obj ~ task + (1|subject) + (1|trial), REML = FALSE
 
 ### 2. 2. i. which would you include among your random effects and why? (support your choices with relevant measures, taking into account variance explained and number of parameters going into the modelling)  
 
+```{r}
+rt_no_ranef <- lm(rt.obj ~ task, data = df_experiment)
+anova(rt_partialpooling1, rt_partialpooling2, rt_no_ranef)
+summary(rt_partialpooling1)
+```
+
+Optimally, i should like to model the hierarchies i'd expect exist in the data. That would definitively include random intercepts per subject, as I assume reaction time is in some sense dependent on subject. Although this doesn't explain much of the variance, it does reduce the AIC slightly. I would probably also consider doing random intercepts for trial, but seeing as this increases the AIC value, i don't regard it as the right choice, as i only want to add terms that increase my models explanatory power.
 
 ### 2. 2. ii. explain in your own words what your chosen models says about response times between the different tasks  
 
+My model shows that task significantly predicts reaction time for all three tasks (p < 0.05). Subjects have highest reaction time with doubles, then quadruplets, then singles. 
 
 ### 2. 3. Now add _pas_ and its interaction with _task_ to the fixed effects 
 ```{r}
@@ -235,25 +281,26 @@ rt_partialpooling5 <- lmer(rt.obj ~ task*pas + (1|subject) + (1|trial) + (1|odd.
 rt_partialpooling6 <- lmer(rt.obj ~ task*pas + (1|subject) + (1|trial) + (1|odd.digit) + (1|cue), REML = FALSE, data = df_experiment)
 rt_partialpooling7 <- lmer(rt.obj ~ task*pas + (1|subject) + (1|trial) + (1|odd.digit) + (1|cue) + (1|pas), REML = FALSE, data = df_experiment)
 rt_partialpooling8 <- lmer(rt.obj ~ task*pas + (1|subject) + (1|trial) + (1|odd.digit) + (1|cue) + (1|pas) + (1|seed), REML = FALSE, data = df_experiment)
-rt_partialpooling9 <- lmer(rt.obj ~ task*pas + (1|subject) + (1|trial) + (1|odd.digit) + (1|cue) + (1|pas) + (1|seed) + (1|even.digit), REML = FALSE, data = df_experiment) #Finally 
+rt_partialpooling9 <- lmer(rt.obj ~ task*pas + (1|subject) + (1|trial) + (1|odd.digit) + (1|cue) + (1|pas) + (1|seed) + (1|even.digit), REML = FALSE, data = df_experiment) # Only this one failed to converge!
 ```
-
 
 ### 2. 3. ii. create a model by adding random intercepts (without modelling slopes) that results in a singular fit - then use `print(VarCorr(<your.model>), comp='Variance')` to inspect the variance vector - explain why the fit is singular (Hint: read the first paragraph under details in the help for `isSingular`)
 
 ```{r}
 print(VarCorr(rt_partialpooling9), comp='Variance')
+?isSingular
 ```
 
-The fit is singular, because "even.digit" explains no variance. 
+The fit is singular because "even.digit" explains no variance, i.e. is estimated at exactly 0.
 
 ### 2. 3. iii. in your own words - how could you explain why your model would result in a singular fit?
 
-"even.digit" explains no variance, because I had already added "odd.digit", and they explain the samevariance. 
+If you add two variables that explain exactly the same variance, you would end up with a singular fit. So optimally you want to add terms that explain a lot of variance of which no other variables explain.
 
 # Exercise 3
 
 ```{r}
+# Making df
 data.count <- df %>%
   group_by(subject, task, pas) %>%
   dplyr::summarise("count" = n())
@@ -266,8 +313,9 @@ pasmodel <- glmer(count ~ pas*task + (pas|subject), data = data.count, family = 
 summary(pasmodel)
 ```
 
-### 3. 2. i. which family should be used?  
-Poisson, because it's good for modelling counts. 
+### 3. 2. i. which family should be used?
+
+Poisson, because it's good for modelling frequency (count). 
 
 ### 3. 2. ii. why is a slope for _pas_ not really being modelled?  
 
@@ -279,24 +327,39 @@ I did get the error, now it works :)
 
 ### 3. 2. iv. when you have a converging fit - fit a model with only the main effects of _pas_ and _task_. Compare this with the model that also includes the interaction
 
+Did not have a converging fit, but will do so anyway.
+
+```{r}
+pasmodel2 <- glmer(count ~ pas + task + (pas|subject), data = data.count, family = poisson)
+summary(pasmodel2)
+```
+
+The interaction model does model the data better with all interaction effects being significant (p < 0.05), and with a lower AIC value.
 
 ### 3. 2. v. indicate which of the two models, you would choose and why  
 
+I would choose the model with the interaction effect included. This seems a too important distinction in the data to be ignored.
 
 ### 3. 2. vi. based on your chosen model - write a short report on what this says about the distribution of ratings as dependent on _pas_ and _task_  
 
 ```{r}
-pasmodel2 <- glmer(count ~ pas + task + (pas|subject), data = data.count, family = poisson)
-tibble(sum(residuals(pasmodel)^2), sum(residuals(pasmodel2)^2))
+tibble("SSR interaction model" = sum(residuals(pasmodel)^2), "SSR no interaction" = sum(residuals(pasmodel2)^2))
 AIC(pasmodel, pasmodel2)
 ```
+
+
 
 ### 3. 2. vii.
 
 ```{r}
+# Subsetting
 pas_foursubjects <- data.count %>% 
   filter(subject == "001"|subject == "002"|subject == "003"|subject == "004")
-pasmodel_foursubjects <- glmer(count ~ pas + task + (pas|subject), data = pas_foursubjects, family = poisson)
+
+# Modelling
+pasmodel_foursubjects <- glmer(count ~ pas*task + (pas|subject), data = pas_foursubjects, family = poisson)
+
+# Plotting
 pas_foursubjects %>% 
   ggplot() +
   geom_point(aes(x = pas, y = fitted(pasmodel_foursubjects), color = "Estimated")) +
