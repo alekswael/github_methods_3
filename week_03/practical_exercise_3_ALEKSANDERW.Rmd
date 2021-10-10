@@ -2,9 +2,8 @@
 title: "practical_exercise_3, Methods 3, 2021, autumn semester"
 author: "Aleksander Moeslund Wael"
 date: "01/10/2021"
-output:
-  pdf_document: default
-  html_document: default
+geometry: margin=2cm
+output: pdf_document
 ---
 
 <style type="text/css">
@@ -14,7 +13,7 @@ output:
 </style>
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE, tidy.opts=list(width.cutoff=60), tidy=TRUE)
 ```
 
 Loading packages
@@ -340,10 +339,17 @@ The interaction model does model the data better with all interaction effects be
 
 I would choose the model with the interaction effect included. This seems a too important distinction in the data to be ignored.
 
-### 3. 2. vi. based on your chosen model - write a short report on what this says about the distribution of ratings as dependent on _pas_ and _task_  
+### 3. 2. vi. based on your chosen model - write a short report on what this says about the distribution of ratings as dependent on _pas_ and _task_
+
+### Building the model
+The model i've chosen is count ~ pas * task + (pas | subject). Results from this model indicate that the frequency of observations for a certain combination of PAS-score, task and subject (the count variable) is significantly predicted by PAS-score and task and the interaction between the two (p < 0 .05). The model includes random slopes for PAS-score per subject (intercept).
+
+### Results
+The model suggests that count decreases as PAS-score increases, and count is largest in task "quadruplets", then "doubles" then "singles". Though it is more useful to look at the interaction effects here - when PAS-score increases, the task "quadruplets" decreases compared to "doubles", and "singles" increases compared to "doubles". This effectively means that subjects are actually more "perceptually aware" doing the "singles" task, even though count of PAS-score generally decreases (as per pas main effect) and count of "singles" task generally decreases (as per task main effect). 
 
 ```{r}
 tibble("SSR interaction model" = sum(residuals(pasmodel)^2), "SSR no interaction" = sum(residuals(pasmodel2)^2))
+summary(pasmodel)
 AIC(pasmodel, pasmodel2)
 ```
 
