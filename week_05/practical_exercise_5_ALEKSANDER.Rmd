@@ -1,0 +1,36 @@
+---
+title: "practical_exercise_5_ALEKSANDER"
+author: "Aleksander Wael"
+date: "10/13/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Loading packages
+
+```{r}
+pacman::p_load(tidyverse, lmerTest, lme4, gridExtra, dfoptim, readbulk)
+```
+
+# EXERCISE 4 - Download and organise the data from experiment 1
+
+### 4.1 Creating a data frame with all subject data
+
+```{r}
+df <- read_bulk("experiment_1")
+```
+
+### 4.1.i - Adding NAs for seed variable
+
+read_bulk() automatically fills empty rows with NA, so this step isn't needed.
+
+### 4.1.ii - Remove practice trials
+
+```{r}
+df <- df %>% 
+  filter(trial.type == "experiment")
+```
+
