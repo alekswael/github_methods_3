@@ -23,9 +23,22 @@ pacman::p_load(tidyverse, lmerTest, lme4, gridExtra, dfoptim, readbulk)
 df <- read_bulk("experiment_1")
 ```
 
-### 4.1.i - Adding NAs for seed variable
+### 4.1.i - Adding NAs for seed variable and factorise
 
 read_bulk() automatically fills empty rows with NA, so this step isn't needed.
+
+```{r}
+# Assigning variables to proper class
+df$pas <- as.numeric(df$pas)
+df$trial <- as.character(df$trial)
+df$target.contrast <- as.numeric(df$target.contrast)
+df$cue <- as.character(df$cue)
+df$rt.subj <- as.numeric(df$rt.subj)
+df$rt.obj <- as.numeric(df$rt.obj)
+df$target.contrast <- as.numeric(df$target.contrast)
+df$target.frames <- as.integer(df$target.frames)
+df$subject <- as.factor(df$subject)
+```
 
 ### 4.1.ii - Remove practice trials
 
@@ -33,4 +46,116 @@ read_bulk() automatically fills empty rows with NA, so this step isn't needed.
 df <- df %>% 
   filter(trial.type == "experiment")
 ```
+
+### 4.1.iii - Create a correct variable
+
+Adding variable "correct" to display if subject was correct
+
+```{r}
+# Adding empty variable
+df <- df %>% 
+  mutate(obj.resp.2 = obj.resp)
+
+# Renaming rows in obj.resp.2 to get same units as target.type
+df$obj.resp.2 <- replace(df$obj.resp.2, df$obj.resp.2 == "e", "even")
+df$obj.resp.2 <- replace(df$obj.resp.2, df$obj.resp.2 == "o", "odd")
+
+# Adding value for correct and incorrect answers
+df_correct <- df %>%
+  filter(obj.resp.2 == target.type) %>% 
+  mutate(correct = "1")
+
+# Joining with my df
+df <- left_join(df, df_correct)
+
+# Remaining are NAs, so replace with 0
+df$correct <- replace(df$correct, is.na(df$correct), "0")
+
+# Treating as numeric, otherwise i get an error later on
+df$correct <- as.numeric(df$correct)
+```
+
+### 4.1.iv
+
+target.contrast is not manipulated in this experiment and is set at 0.1. target.frames is now manipulated and ranges from 1-6 frames.
+
+# EXERCISE 5 - Use log-likelihood ratio tests to evaluate logistic regression models
+
+### 5.1 Do logistic regression - correct as the dependent variable and target.frames as the independent variable. (Make sure that you understand what target.frames encode). Create two models - a pooled model and a partial-pooling model. The partial-pooling model should include a subject-specific intercept.
+
+Pooled model
+
+```{r}
+m1_pooled <- glm(correct ~ target.frames, data = df, family = "binomial")
+```
+
+Partially-pooled model
+
+```{r}
+m1_partial <- glmer(correct ~ target.frames + (1|subject), data = df, family = "binomial")
+```
+
+### 5.1.i
+
+```{r}
+likelihood_fun <- function(i) {
+  p <- fitted(i) # Vector of fitted values
+  y <- as.vector(model.response(model.frame(i), type = "numeric")) # Observed y-values
+  likelihood = prod(p^y*(1-p)^(1-y)) # The likelihood function for logistic regression
+  return(likelihood)
+}
+
+likelihood_fun(m1_partial)
+```
+
+### 5.1.ii.
+
+```{r}
+log_likelihood_fun <- function(i) {
+  p <- fitted(i) # Vector of fitted values
+  y <- as.vector(model.response(model.frame(i), type = "numeric")) # Observed y-values
+  log_likelihood <- sum(y*log(p)+(1-y)*log(1-p)) # The log-likelihood function for logistic regression
+  return(log_likelihood)
+}
+
+log_likelihood_fun(m1_partial)
+```
+
+### 5.1.iii.
+
+```{r}
+likelihood_fun(m1_pooled)
+log_likelihood_fun(m1_pooled)
+logLik(m1_pooled)
+```
+
+Output is the same from my function and lokLik() function. The log-likelihood is better, because the likelihood function has to calculate more decimals (or the decimals are more meaningful, because the likelihood will often approximate 0)
+
+### 5.1.iv.
+
+```{r}
+log_likelihood_fun(m1_partial)
+logLik(m1_partial)
+```
+
+# 5.2 Use log-likelihood ratio tests to argue for the addition of predictor variables, start from the null model, glm(correct ~ 1, 'binomial', data), then add subject-level intercepts, then add a group-level effect of target.frames and finally add subject-level slopes for target.frames. Also assess whether or not a correlation between the subject-level slopes and the subject-level intercepts should be included
+
+```{r}
+m0 <- glm(correct ~ 1, data = df, family = 'binomial') # Null-model
+m2 <- glmer(correct ~ 1 + (1|subject), data = df, family = 'binomial') # Null-model with subject intercepts
+m1_partial # Model from before, predicted by target.frames and subject intercepts
+m3 <- glmer(correct ~ target.frames + (target.frames|subject), data = df, family = "binomial")
+
+anova(m2, m0, m1_partial, m3)
+
+```
+
+### 5.2.i. write a short methods section and a results section where you indicate which model you chose and the statistics relevant for that choice. Include a plot of the estimated group-level function with xlim=c(0, 8) that includes the estimated subject-specific functions.
+
+
+
+### 5.2.ii. also include in the results section whether the fit didn’t look good for any of the subjects. If so, identify those subjects in the report, and judge (no statistical test) whether their performance (accuracy) differed from that of the other subjects. Was their performance better than chance? (Use a statistical test this time) (50 %)
+
+
+
 
