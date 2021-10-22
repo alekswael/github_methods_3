@@ -101,7 +101,7 @@ m1_partial <- glmer(correct ~ target.frames + (1|subject), data = df, family = "
 likelihood_fun <- function(i) {
   p <- fitted(i) # Vector of fitted values
   y <- as.vector(model.response(model.frame(i), type = "numeric")) # Observed y-values
-  likelihood = prod(p^y*(1-p)^(1-y)) # The likelihood function for logistic regression
+  likelihood <- prod(p^y*(1-p)^(1-y)) # The likelihood function for logistic regression
   return(likelihood)
 }
 
@@ -148,11 +148,20 @@ m3 <- glmer(correct ~ target.frames + (target.frames|subject), data = df, family
 
 anova(m2, m0, m1_partial, m3)
 
+
 ```
 
 ### 5.2.i. write a short methods section and a results section where you indicate which model you chose and the statistics relevant for that choice. Include a plot of the estimated group-level function with xlim=c(0, 8) that includes the estimated subject-specific functions.
 
-
+```{r}
+df %>% 
+  ggplot() +
+   geom_smooth(aes(x = target.frames, y = fitted(m1_partial), color = "Partial Pooled")) + 
+   geom_smooth(aes(x = target.frames, y = fitted(m1_pooled), color = "Pooled")) +
+   facet_wrap( ~ subject) + 
+   labs(title = "Estimated group-level function pr. subject") +
+   labs(x = "x = target.frames (1:6)", y = "y = estimated functions (subject level)")
+```
 
 ### 5.2.ii. also include in the results section whether the fit didn’t look good for any of the subjects. If so, identify those subjects in the report, and judge (no statistical test) whether their performance (accuracy) differed from that of the other subjects. Was their performance better than chance? (Use a statistical test this time) (50 %)
 
