@@ -146,15 +146,18 @@ m2 <- glmer(correct ~ 1 + (1|subject), data = df, family = 'binomial') # Null-mo
 m1_partial # Model from before, predicted by target.frames and subject intercepts
 m3 <- glmer(correct ~ target.frames + (target.frames|subject), data = df, family = "binomial")
 
-anova(m2, m0, m1_partial, m3)
+anova(m2, m0, m1_partial, m3) # This function also give logLik values
 
+anova(m1_partial, m3)
 
 ```
 
 ### 5.2.i. write a short methods section and a results section where you indicate which model you chose and the statistics relevant for that choice. Include a plot of the estimated group-level function with xlim=c(0, 8) that includes the estimated subject-specific functions.
 
+I use the anova function to display the logLik values of several models with varying complexity. Since m3 and m1_partial have the highest logLik values (most likely to be true), I compare these to see if the difference between them is significant. The difference between the two models is significant (p < 0.05), which is why i would choose the more complex model with target.frames as a fixed effect and with intercepts per subject and slopes for target.frames.
+
 ```{r}
-df %>% 
+df %>% # Plot of group-level function per subject
   ggplot() +
    geom_smooth(aes(x = target.frames, y = fitted(m1_partial), color = "Partial Pooled")) + 
    geom_smooth(aes(x = target.frames, y = fitted(m1_pooled), color = "Pooled")) +
@@ -165,6 +168,14 @@ df %>%
 
 ### 5.2.ii. also include in the results section whether the fit didn’t look good for any of the subjects. If so, identify those subjects in the report, and judge (no statistical test) whether their performance (accuracy) differed from that of the other subjects. Was their performance better than chance? (Use a statistical test this time) (50 %)
 
+Subject 24 has a pretty bad fit, so i will compare it to the chance of 50%.
 
+```{r}
+df_24 <- df %>% 
+  filter(subject == "24")
 
+mean(df_24$correct)
+
+t.test(, mean(df_24$correct))
+```
 
