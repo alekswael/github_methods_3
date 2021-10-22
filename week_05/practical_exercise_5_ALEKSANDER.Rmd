@@ -12,7 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Loading packages
 
 ```{r}
-pacman::p_load(tidyverse, lmerTest, lme4, gridExtra, dfoptim, readbulk)
+pacman::p_load(tidyverse, lmerTest, lme4, gridExtra, dfoptim, readbulk, boot, multcomp)
 ```
 
 # EXERCISE 4 - Download and organise the data from experiment 1
@@ -29,7 +29,7 @@ read_bulk() automatically fills empty rows with NA, so this step isn't needed.
 
 ```{r}
 # Assigning variables to proper class
-df$pas <- as.numeric(df$pas)
+df$pas <- as.factor(df$pas)
 df$trial <- as.character(df$trial)
 df$target.contrast <- as.numeric(df$target.contrast)
 df$cue <- as.character(df$cue)
@@ -174,8 +174,69 @@ Subject 24 has a pretty bad fit, so i will compare it to the chance of 50%.
 df_24 <- df %>% 
   filter(subject == "24")
 
-mean(df_24$correct)
+t.test(df_24$correct, mu = 0.5)
+```
 
-t.test(, mean(df_24$correct))
+When running a one sample t-test which the null hypothesis of "true mean is equal to 0.5", we obtain a p-value of less then 0.05, meaning that we reject the null hypothesis. According to this, subject 24 performs better than chance.
+
+### 5.3 Now add pas to the group-level effects - if a log-likelihood ratio test justifies this, also add the interaction between pas and target.frames and check whether a log-likelihood ratio test justifies this
+
+```{r}
+m4 <- glmer(correct ~ target.frames + pas + (target.frames|subject), family = binomial, data = df)
+
+m5 <- glmer(correct ~ target.frames * pas + (target.frames|subject), family = binomial, data = df, control = glmerControl(optimizer = "bobyqa"))
+
+anova(m4, m5)
+```
+
+### 5.3.i
+
+It converges.
+
+### 5.3.ii
+
+```{r}
+df %>% 
+  ggplot()+
+  geom_point(aes(x = target.frames, y = fitted(m5), color = pas))+
+  facet_wrap(~pas)+
+  theme_bw()
+```
+
+The plot shows that for the lowest PAS score of 1, increasing target frames both increases accuracy for some subjects and reduces it for others. When PAS score increases, we can also see that the distribution of fitted values is reduced, and at PAS rating 4, large value of target.frames approximates almost 100% probability of correctness.
+
+### EXERCISE 6 - Test Linear Hypotheses
+
+In this section we are going to test different hypotheses. We assume that we have already proved that more objective evidence (longer duration of stimuli) is sufficient to increase accuracy in and of itself and that more subjective evidence (higher PAS ratings) is also sufficient to increase accuracy in and of itself.
+We want to test a hypothesis for each of the three neighbouring differences in PAS, i.e. the difference between 2 and 1, the difference between 3 and 2 and the difference between 4 and 3. More specifically, we want to test the hypothesis that accuracy increases faster with objective evidence if subjective evidence is higher at the same time, i.e. we want to test for an interaction.
+
+### 6.1
+
+```{r}
+summary(m5)
+```
+
+```{r}
+#inv.logit(0.11480)
+#inv.logit(0.44718)
+```
+
+### 6.1.i.
+
+Looking at the fixed effects, we see that increasing target.frames (with PAS at 1) increases the likelihood of answering correct (0.11480 on the log-odds scale). Looking at the interaction effects, we see that, when increasing target.frames with PAS at 2, the likelihood of answering correct is higher than that of PAS 1 (0.44718 on the log-odds scale).
+
+### 6.2.summary won’t allow you to test whether accuracy increases faster with objective evidence for PAS 3 than for PAS 2 (unless you use relevel, which you are not allowed to in this exercise). Instead, we’ll be using the function glht from the multcomp package.
+
+```{r}
+## testing whether PAS 2 is different from PAS 1
+contrast.vector <- matrix(c(0, 0, 0, 0, 0, 1, 0, 0), nrow=1)
+gh <- glht(m5, contrast.vector)
+print(summary(gh))
+
+## as another example, we could also test whether there is a difference in
+## intercepts between PAS 2 and PAS 3
+contrast.vector <- matrix(c(0, -1, 1, 0, 0, 0, 0, 0), nrow=1)
+gh <- glht(m5, contrast.vector)
+print(summary(gh))
 ```
 
