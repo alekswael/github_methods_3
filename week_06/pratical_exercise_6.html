@@ -386,7 +386,7 @@ REMEMBER: All exercises should be done in <em>Python</em></p>
 <div id="exercise-1-get-acquainted-with-python-learn-some-of-the-differences-between-it-and-r" class="section level1">
 <h1>EXERCISE 1 Get acquainted with <em>Python</em> learn some of the differences between it and <em>R</em></h1>
 <p>To make sure that <em>Python</em> runs within <em>R Markdown</em>, make sure you have the <em>reticulate</em> package installed <code>install.packages(&#39;reticulate&#39;)</code><br />
-Also create a text file that is called <em>.Renviron</em> (remember the dot) placed in the folder where your <em>RProj</em> file is. It should have a single line: <code>RETICULATE_PYTHON=PATH</code> where <code>PATH</code> is the path to your <em>methods3</em> conda environment. Use the commands below to find the paths:</p>
+Also create a text file that is called <em>.Renviron</em> (remember the dot) placed in the folder where your <em>RProj</em> file is. It should have a single line: <code>RETICULATE_PYTHON=PATH</code> where <code>PATH</code> is the path to your <em>methods3</em> conda environment. Note that you must restart <em>R</em> for the changes of creating the <em>.Renviron</em> file to take effect- Use the commands below to find the paths:</p>
 <pre class="r"><code>library(reticulate)
 print(conda_list())</code></pre>
 <pre><code>##           name                                             python

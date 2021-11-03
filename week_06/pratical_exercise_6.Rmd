@@ -23,7 +23,7 @@ REMEMBER: All exercises should be done in _Python_
 # EXERCISE 1 Get acquainted with _Python_ learn some of the differences between it and _R_  
 
 To make sure that _Python_ runs within _R Markdown_, make sure you have the _reticulate_ package installed `install.packages('reticulate')`  
-Also create a text file that is called _.Renviron_ (remember the dot) placed in the folder where your _RProj_ file is. It should have a single line: `RETICULATE_PYTHON=PATH` where `PATH` is the path to your _methods3_ conda environment. Use the commands below to find the paths:  
+Also create a text file that is called _.Renviron_ (remember the dot) placed in the folder where your _RProj_ file is. It should have a single line: `RETICULATE_PYTHON=PATH` where `PATH` is the path to your _methods3_ conda environment. Note that you must restart _R_ for the changes of creating the _.Renviron_ file to take effect- Use the commands below to find the paths:  
 
 ```{r}
 library(reticulate)
