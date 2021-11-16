@@ -28,7 +28,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-plt.close('all')
+plt.close('all') #Close all previous plots
 cm = np.corrcoef(iris.data.T)
 sns.set(font_scale=0.75)
 hm = sns.heatmap(cm,

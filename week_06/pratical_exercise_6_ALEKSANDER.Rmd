@@ -33,7 +33,7 @@ print(conda_list())
 To update your environment based on the updated `methods3_environment.yml` file, go to your _week_06_ folder and run the following from a _bash_ interpreter (e.g. _terminal_):  
 
 ```{bash, eval=FALSE}
-conda env create --force -f methods3_environment.yml
+#conda env create --force -f methods3_environment.yml
 ```
 
 The `--force` flag allows for overwriting  
@@ -136,10 +136,11 @@ plt.show()
 
 ```{python}
 # Exercise 1.1
+# GENERATING DATA
 import numpy as np
 np.random.seed(7) # for reproducibility
 
-x = np.arange(10)
+x = np.arange(10) # 10 observations from 1-10
 y = 2 * x
 y = y.astype(float)
 n_samples = len(y)
@@ -148,15 +149,21 @@ y += np.random.normal(loc=0, scale=1, size=n_samples)
 X = np.zeros(shape=(n_samples, 2))
 X[:, 0] = x ** 0
 X[:, 1] = x ** 1
+```
 
-#Bhat
+```{python}
+# Exercise 1.1.i
+#Parameter estimates with matrix calculation
 bhat = np.linalg.inv(np.matrix.transpose(X) @ X) @ np.matrix.transpose(X) @ y
 print(bhat)
 
-#Yhat
+# Estimated values
 yhat = bhat[0] + bhat[1]*x
 print(yhat)
+```
 
+```{python}
+# Exercise 1.1.ii
 #Plot
 import matplotlib.pyplot as plt
 plt.figure() # create new figure
@@ -210,6 +217,20 @@ $bias(\hat{f}(x_0)) = E[\hat{f}(x_0)] - f(x_0)$
     v. show how the __squared bias__ and the __variance__ are related to the complexity of the fitted models  
     vi. simulate __epsilon__: `epsilon = np.random.normal(scale=5, size=100)`. Based on your simulated values of __bias, variance and epsilon__, what is the __Mean Squared Error__ for each of the three fits? Which fit is better according to this measure?  
 
+```{python}
+# Exercise 2.1
+def true_function(x):
+  y = x**2
+  return(y)
+
+# Generating data
+x = np.arange(0,6,0.1)
+y_true = true_function(x)
+
+# Adding noise
+np.random.seed(7)
+y_noise = rnorm(x, sd = 5)
+```
 
 ```{python, eval=FALSE}
 # Exercise 2.2

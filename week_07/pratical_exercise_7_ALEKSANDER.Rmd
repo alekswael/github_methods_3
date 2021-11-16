@@ -88,10 +88,11 @@ plt.show()
 ```
 
 ### 1.2
-```{python, eval=FALSE}
+```{python}
 from sklearn.linear_model import LinearRegression
 regressor = LinearRegression()
-regressor.fit(x.reshape(-1,1), y_noise)
+regressor.fit(x.reshape(-1,1), y_noise) # Fitting model
+y_hat = regressor.predict(x.reshape(-1,1)) # Predicting data based on x
 ```    
 
 ### 1.2.i
@@ -100,21 +101,67 @@ import matplotlib.pyplot as plt
 plt.figure()
 plt.plot(x, y_noise, "bo")
 plt.plot(x, y, "r-")
-plt.plot()
+plt.plot(x, y_hat, "g-")
 plt.show()
 ```
 
 
-```{python, eval=FALSE}
+```{python}
 # Exercise 1.2.ii
 from sklearn.preprocessing import PolynomialFeatures
 quadratic = PolynomialFeatures(degree=2)
 X_quadratic = quadratic.fit_transform(x.reshape(-1, 1))
 regressor = LinearRegression()
-regressor.fit() # what goes in here?
-y_quadratic_hat # calculate this
+regressor.fit(X_quadratic, y_noise)
+y_quadratic_hat = regressor.predict(X_quadratic)
 
+# X_quadratic is the second order predictor, so should be a better fit (but an overfit)
 ```
+
+```{python}
+# Plotting
+plt.close('all') #Close all previous plots
+plt.figure()
+# data scatter
+plt.plot(x, y_noise, "bo")
+# true order fit
+plt.plot(x, y, "r-")
+# first order fit
+plt.plot(x, y_noise, "bo")
+plt.plot(x, y_hat, "g-")
+# second order fit
+plt.plot(x, y_quadratic_hat, "b-")
+plt.show()
+```
+
+```{python}
+# 1.2.iii
+# Fifth order
+penta = PolynomialFeatures(degree=5)
+X_penta = penta.fit_transform(x.reshape(-1, 1))
+regressor = LinearRegression()
+regressor.fit(X_penta, y_noise)
+y_penta_hat = regressor.predict(X_penta)
+```
+
+```{python}
+# Plotting
+plt.close('all') #Close all previous plots
+plt.figure()
+# data scatter
+plt.plot(x, y_noise, "bo")
+# true order fit
+plt.plot(x, y, "r-")
+# first order fit
+plt.plot(x, y_noise, "bo")
+plt.plot(x, y_hat, "g-")
+# second order fit
+plt.plot(x, y_quadratic_hat, "b-")
+# fifth order fit
+plt.plot(x, y_penta_hat, "y-")
+plt.show()
+```
+
 
 # EXERCISE 2: Fitting training data and applying it to test sets with and without regularization
 
