@@ -397,7 +397,7 @@ REMEMBER: This is Assignment 3 and will be part of your final portfolio</p>
 </li>
 <li>Create the sensor covariance matrix <span class="math inline">\(\Sigma_{XX}\)</span>: <span class="math display">\[\Sigma_{XX} = \frac 1 N \sum_{i=1}^N XX^T\]</span> <span class="math inline">\(N\)</span> is the number of repetitions and <span class="math inline">\(X\)</span> has <span class="math inline">\(s\)</span> rows and <span class="math inline">\(t\)</span> columns (sensors and time), thus the shape is <span class="math inline">\(X_{s\times t}\)</span>. Do the sensors pick up independent signals? (Use <code>plt.imshow</code> to plot the sensor covariance matrix)<br />
 </li>
-<li>Make an average over the repetition dimension using <code>np.mean</code> - use the <code>axis</code> argument. (The resulting array should have two dimensions with time as the first and magnetic field as the second)<br />
+<li>Make an average over the repetition dimension using <code>np.mean</code> - use the <code>axis</code> argument. (The resulting array should have two dimensions <del>with time as the first and magnetic field as the second</del> with sensor as the first and time as the second)<br />
 </li>
 <li>Plot the magnetic field (based on the average) as it evolves over time for each of the sensors (a line for each) (time on the x-axis and magnetic field on the y-axis). Add a horizontal line at <span class="math inline">\(y = 0\)</span> and a vertical line at <span class="math inline">\(x = 0\)</span> using <code>plt.axvline</code> and <code>plt.axhline</code><br />
 </li>
