@@ -313,7 +313,44 @@ plt.ylabel("Classification score")
 plt.title("Classification scores at given times")
 plt.show()
 
+times[94]
+
+# Classification is best at 176 ms.
+
 #%% 2.2.vi
+
+cv = StratifiedKFold()
+logR = LogisticRegression(C=1e-1, penalty="l1", solver = "liblinear")
+cv_scores = []
+
+# Subsetting time
+for i in range(251):
+    t = sc.fit_transform(data_1_2_equal[:,:,i])
+    logR.fit(t, y_1_2_equal)
+    scores = cross_val_score(logR, t, y_1_2_equal, cv=5)
+    cv_scores.append(np.mean(scores))
+
+#%% 2.2.vi CONTINUED
+# Picking highest score
+np.amax(cv_scores)
+np.argmax(cv_scores) # Indeci with highest classification
+
+#%% 2.2.vi CONTINUED
+plt.figure() 
+plt.plot(times, cv_scores)
+plt.axvline(x = 0)
+plt.axvline(times[36])
+plt.axhline(y = 0.5) # Chance level is 50% for binary classification
+plt.xlabel("Time in ms")
+plt.ylabel("Classification score")
+plt.title("Classification scores at given times")
+plt.show()
+
+times[36]
+
+# Is best at -56 ms.
+
+#%% 2.2.vii
 
 
 #%%
