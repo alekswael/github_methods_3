@@ -1,0 +1,190 @@
+---
+title: "practical_exercise_8 , Methods 3, 2021, autumn semester"
+author: '[FILL IN YOUR NAME]'
+date: "[FILL IN THE DATE]"
+output: html_document
+---
+
+<style type="text/css">
+  body{
+  font-size: 14pt;
+}
+</style>
+
+Classes - what are they?
+```{python}
+# Define a new class (capital letters indicate classes)
+class LinearRegression:
+  # Initiate class object when class is called (don't worry about this one for now)
+  def __init__(self):
+    pass
+  
+  # Define module (a function for a class object). It may be accessed by running .fit()
+  def fit(self, X, y):
+    self.coefs_ = np.linalg.inv(X.T @ X) @ X.T @ y # The coefs_ will be a class feature and may thus be accessed by running .coefs_
+  
+  # Define module (a function for a class object). It may be accessed by running .predict()
+  def predict(self, x):
+    y_hat = self.coefs_[0] + self.coefs_[1] * x
+    return y_hat
+  
+```
+
+# Define data to use as an example
+```{python}
+# Define data from assignment ... 6(?)
+import matplotlib.pyplot as plt
+import numpy as np
+x = np.arange(0, 6.1, 0.1) # "to but not including" in python
+y_true = x**2 # The true relationship is f(x) = x^2
+noise = np.random.normal(scale=5, size=len(y_true)) # Generate noise
+y_noise = y_true + noise # Add noise to true labels
+X = np.zeros(shape=(len(x), 2))
+X[:, 0] = x ** 0
+X[:, 1] = x ** 1
+
+# Show data that we have made
+plt.figure()
+plt.plot(x, y_noise, "o")
+plt.plot(x, y_true)
+plt.legend(['noisy data', "true relationship"])
+plt.show()
+```
+
+# Instantiate class object and fit + predict
+```{python}
+# Initialize a class object (sometimes also called class instantiation)
+regressor = LinearRegression()
+
+# A dot (.) may represent "use class object module" -> this will end in "()"
+regressor.fit(X, y_true)
+
+# A dot (.) may ALSO represent "access class object features" -> this will not end in "()"
+regressor.coefs_
+
+# Here we use the module "predict" from the class object "regressor"... And get an output
+y_hat = regressor.predict(x)
+y_hat
+
+# Plot to see our predicted values
+plt.figure()
+plt.plot(x, y_noise, "o")
+plt.plot(x, y_true, "g-")
+plt.plot(x, y_hat, "r-")
+plt.legend(['noisy data', "true relationship", "class() linear fit"])
+plt.show()
+```
+
+3D arrays and mean along axes; how do they behave?
+```{python}
+# Load in packages
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# Defining 2d array
+two_d = np.array([[1,2,3,4],[2,3,4,5]])
+two_d # Inspecting array
+two_d.shape # Inspecting shape. Rows are first dimension, columns is second dimension (Roman Catholics)
+np.mean(two_d, axis=0) # Mean of axis = 0 -> Means computed along rows (first dimension). In essence "collapsing" all rows into 1 row by taking the mean; essentially losing the row dimension
+
+# Defining 3d array
+three_d = np.array([[[1,2,3,4],[2,3,4,5]], [[10,9,8,7], [7,6,5,4]], [[7,6,5,4], [7,8,9,10]]])
+three_d # Inspecting array and shape. Notice! Rows are no longer the first dimension. Rather the first dimension is depth, second is rows, and third is columns
+three_d.shape
+np.mean(three_d, axis=0) # Mean of axis = 0 -> Means computed along depth (first dimension). In essence "collapsing" all layers/depth into depth of 1 by taking the mean; essentially losing the depth dimension
+np.mean(three_d, axis=0).shape
+
+# Collapsing dimensions using reshape 
+three_d # Inspecting array and shape
+three_d.shape
+three_d.reshape(3,-1) # Reshaping
+three_d.reshape(3,-1).shape
+# Inspecting output. It would seem that reshape in this example concatenates the rows for each layer. Thus we end up with: 3 rows (one for each layer), and 8 columns (number of rows before reshaping * number of columns before reshaping).
+
+```
+
+```{python}
+# Forming groups of group size = 2. Group forming has to be outside study groups
+groups = group_up(group_size=2, outside_studygroup=True)
+
+# For group in groups
+for group in groups:
+  
+  # While time is smaller than 11:10
+  while time < 11:10:
+    
+    # Do over the shoulder programming. When finished computing, done == True
+    done = over_the_shoulder(group)
+    
+    # If done, do pair-wise programming
+    if done = True:
+      pair_wise_programming(group)
+  
+  # When time is not smaller than 11:10
+  pair_wise_programming(group)
+```
+
+
+Define a LinearRegression() class
+```{python}
+class LinearRegression:
+  
+  
+  def __init__(self):
+    pass
+  
+  
+  def fit(self, X, y):
+    self.coefs_ = np.linalg.inv(X.T @ X) @ X.T @ y
+  
+  
+  def predict(self, x):
+    y_hat = self.coefs_[0] + self.coefs_[1] * x
+    return y_hat
+  
+```
+
+# Define data to use as an example
+```{python}
+import matplotlib.pyplot as plt
+import numpy as np
+x = np.arange(0, 6.1, 0.1) 
+y_true = x**2 
+noise = np.random.normal(scale=5, size=len(y_true)) 
+y_noise = y_true + noise 
+X = np.zeros(shape=(len(x), 2))
+X[:, 0] = x ** 0
+X[:, 1] = x ** 1
+
+
+plt.figure()
+plt.plot(x, y_noise, "o")
+plt.plot(x, y_true)
+plt.legend(['noisy data', "true relationship"])
+plt.show()
+```
+
+# Instantiate class object and fit + predict
+```{python}
+
+regressor = LinearRegression() # class object
+
+
+regressor.fit(X, y_true) # class module
+
+
+regressor.coefs_ # class feature ( _ indicates it has been learned)
+
+
+y_hat = regressor.predict(x) # class module
+y_hat
+
+
+plt.figure()
+plt.plot(x, y_noise, "o")
+plt.plot(x, y_true, "g-")
+plt.plot(x, y_hat, "r-")
+plt.legend(['noisy data', "true relationship", "class() linear fit"])
+plt.show()
+```
