@@ -123,9 +123,8 @@ plt.show
 
 # 2.1.1: We’ll start with a binary problem - create a new array called data_1_2 that only contains PAS responses 1 and 2. Similarly, create a y_1_2 for the target vector
 
-data_1_2 = np.concatenate((data[pas_1], data[pas_2]), axis=0) # 3D
-data_1_2.shape #
-data_1_2.ndim # number of dimensions
+data_1_2 = np.concatenate((data[pas_1], data[pas_2]), axis=0)
+data_1_2.shape
 
 ##########################
 y_1_2 = []
@@ -146,7 +145,6 @@ np.column_stack
 
 # repetition as rows, and sensor and time as columns
 X_1_2 = data_1_2.reshape(214, -1)
-
 X_1_2.shape
 
 #%%
