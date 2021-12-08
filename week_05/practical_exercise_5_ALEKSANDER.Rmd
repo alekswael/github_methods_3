@@ -1,5 +1,5 @@
 ---
-title: "practical_exercise_5_ALEKSANDER"
+title: "Assignment 2 (Part 2), Methods 3, 2021, autumn semester"
 author: "Aleksander Wael"
 date: "10/13/2021"
 output:
@@ -25,9 +25,9 @@ pacman::p_load(tidyverse, lmerTest, lme4, gridExtra, dfoptim, readbulk, boot, mu
 df <- read_bulk("experiment_1")
 ```
 
-### 4.1.i. Factorise the variables that need factorising
-
 read_bulk() automatically fills empty rows with NA, so this step isn't needed.
+
+### 4.1.i. Factorise the variables that need factorising
 
 ```{r}
 # Assigning variables to proper class
@@ -79,21 +79,19 @@ df$correct <- as.numeric(df$correct)
 
 ### 4.1.iv. Describe how the target.contrast and target.frames variables differ compared to the data from part 1 of this assignment
 
-target.contrast is not manipulated in this experiment and is set at 0.1. target.frames is now manipulated and ranges from 1-6 frames.
+target.contrast is not manipulated in this experiment and is set at 0.1. target.frames is now manipulated and ranges from 1-6 frames. It was opposite in the previous assignment.
 
 # EXERCISE 5 - Use log-likelihood ratio tests to evaluate logistic regression models
 
 ### 5.1 Do logistic regression - correct as the dependent variable and target.frames as the independent variable. (Make sure that you understand what target.frames encode). Create two models - a pooled model and a partial-pooling model. The partial-pooling model should include a subject-specific intercept.
 
-Pooled model
-
 ```{r}
+# Pooled model
 m1_pooled <- glm(correct ~ target.frames, data = df, family = "binomial")
 ```
 
-Partially-pooled model
-
 ```{r}
+# Partially-pooled model
 m1_partial <- glmer(correct ~ target.frames + (1|subject), data = df, family = "binomial")
 ```
 
@@ -151,9 +149,11 @@ anova(m1_partial, m3)
 
 ```
 
+The next exercise has explanations.
+
 ### 5.2.i. write a short methods section and a results section where you indicate which model you chose and the statistics relevant for that choice. Include a plot of the estimated group-level function with xlim=c(0, 8) that includes the estimated subject-specific functions.
 
-I use the anova function to display the logLik values of several models with varying complexity. Since m3 and m1_partial have the highest logLik values (most likely to be true), I compare these to see if the difference between them is significant. The difference between the two models is significant (p < 0.05), which is why i would choose the more complex model with target.frames as a fixed effect and with intercepts per subject and random slopes for target.frames.
+I use the anova function to display the logLik values of several models with varying complexity. Since m3 and m1_partial have the highest logLik values (most likely to be true), I compare these to see if the difference between them is significant. The difference between the two models is significant (p < 0.05), which is why i would choose the more complex model with target.frames as a fixed effect and with intercepts per subject and random slopes for target.frames. The group-level function is plotted below.
 
 ```{r}
 df %>% # Plot of group-level function per subject
@@ -168,7 +168,7 @@ df %>% # Plot of group-level function per subject
 
 ### 5.2.ii. also include in the results section whether the fit didn't look good for any of the subjects. If so, identify those subjects in the report, and judge (no statistical test) whether their performance (accuracy) differed from that of the other subjects. Was their performance better than chance? (Use a statistical test this time) (50 %)
 
-Subject 24 has a pretty bad fit, so i will compare it to the chance of 50%.
+Subject 24 has a quite poor fit, and it seems this participant performs worse than other participants. I will compare it to the chance-level of 50% below.
 
 ```{r}
 df_24 <- df %>% 
@@ -177,7 +177,7 @@ df_24 <- df %>%
 t.test(df_24$correct, mu = 0.5)
 ```
 
-When running a one sample t-test which the null hypothesis of "true mean is equal to 0.5", we obtain a p-value of less then 0.05, meaning that we reject the null hypothesis. According to this, subject 24 performs better than chance at ~ 53% accuracy.
+When running a one sample t-test which the null hypothesis of "true mean is equal to 0.5", we obtain a p-value of less then 0.05, meaning that we reject the null hypothesis. According to this, subject 24 performs better than chance at ~ 56.7% accuracy.
 
 ### 5.3. Now add pas to the group-level effects - if a log-likelihood ratio test justifies this, also add the interaction between pas and target.frames and check whether a log-likelihood ratio test justifies this
 
@@ -188,10 +188,11 @@ m5 <- glmer(correct ~ target.frames * pas + (target.frames|subject), family = bi
 
 anova(m4, m5)
 ```
+It is justified to add the interaction effect based on the logLik score.
 
 ### 5.3.i. if your model doesn’t converge, try a different optimizer
 
-It converges with the bobyqa optimizer.
+It converges now with the bobyqa optimizer.
 
 ### 5.3.ii. plot the estimated group-level functions over xlim=c(0, 8) for each of the four PAS-ratings - add this plot to your report (see: 5.2.i) and add a description of your chosen model. Describe how pas affects accuracy together with target duration if at all. Also comment on the estimated functions’ behaviour at target.frame=0 - is that behaviour reasonable?
 
@@ -202,9 +203,9 @@ df %>%
   theme_bw()
 ```
 
-The plot shows that for the lowest PAS score of 1, increasing target frames both increases accuracy for some subjects and reduces it for others, thus the variance in this data is large. When PAS score increases, we can also see that the distribution of fitted values is reduced, and at PAS rating 3 and 4, large values of target.frames approximates almost 100% probability of having answered correctly.
+The plot shows that for PAS 1, increasing target frames doesn't really increase accuracy. In other words: if you report PAS 1, you weren't "perceptually aware", regardless of target.frames. Therefore, the accuracy hovers around chance-level. The plot also shows the interaction between target.frames and PAS nicely, because the graphs aren't aligned, showing a difference in accuracy-development for each PAS-rating based on target.frames. At PAS rating 3 and 4, large values of target.frames approximates almost 100% probability of having answered correctly. This makes sense, because if you report higher levels of awareness (PAS 3 or 4), you will probably have higher accuracy.
 
-The fitted values are below 0.5 when target.frames = 0, which doesn't make much sense since chance-level accuracy is 50%. This is a limitation of the model.
+Some of the fitted values are below 0.5 when target.frames = 0, which doesn't make much sense since chance-level accuracy is 50%, but also because target.frames starts at 1. This is a limitation of the model.
 
 # EXERCISE 6 - Test Linear Hypotheses
 
@@ -219,9 +220,9 @@ summary(m5)
 
 ### 6.1.i. First, use summary (yes, you are allowed to!) to argue that accuracy increases faster with objective evidence for PAS 2 than for PAS 1.
 
-Looking at the fixed effects, we see that increasing target.frames (with PAS at 1) increases the likelihood of answering correct (0.11480 on the log-odds scale). Looking at the interaction effects, we see that, when increasing target.frames with PAS at 2, the likelihood of answering correct is higher than that of PAS 1 (0.44718 on the log-odds scale). Thus it appears accuracy increases faster with target.frames for PAS 2 than for PAS 1.
+Looking at the fixed effects, we see that increasing target.frames (with PAS at 1) increases the likelihood of answering correct (0.11480 on the log-odds scale). Looking at the interaction effects, we see that, when increasing target.frames with PAS at 2, the likelihood of answering correct is higher than that of PAS 1 (0.44718 on the log-odds scale). Thus it appears accuracy increases faster with target.frames for PAS 2 than for PAS 1. This can also be seen on the previous plot in 5.3.ii. 
 
-### 6.2. summary won't allow you to test whether accuracy increases faster with objective evidence for PAS 3 than for PAS 2 (unless you use relevel, which you are not allowed to in this exercise). Instead, we'll be using the function glht from the multcomp package.
+## 6.2. summary won't allow you to test whether accuracy increases faster with objective evidence for PAS 3 than for PAS 2 (unless you use relevel, which you are not allowed to in this exercise). Instead, we'll be using the function glht from the multcomp package.
 
 ### 6.2.i. To redo the test in 6.1.i, you can create a contrast vector. This vector will have the length of the number of estimated group-level effects and any specific contrast you can think of can be specified using this.
 
