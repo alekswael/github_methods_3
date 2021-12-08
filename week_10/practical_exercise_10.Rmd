@@ -2,7 +2,7 @@
 title: "practical_exercise_10 , Methods 3, 2021, autumn semester"
 author: '[FILL IN YOUR NAME]'
 date: "[FILL IN THE DATE]"
-output: html_document
+output: pdf_document
 ---
 
 <style type="text/css">
@@ -71,7 +71,7 @@ def equalize_targets(data, y):
 # EXERCISE 2 - Use logistic regression with cross-validation to find the optimal number of principal components  
 
 1) We are going to run logistic regression with in-sample validation 
-    i. First, run standard logistic regression (no regularization) based on $Z_{d \times k}$ and `y` (the target vector). Fit (`.fit`) 102 models based on: $k = [1, 2, ..., 101, 102]$ and $d = 102$. For each fit get the classification accuracy, (`.score`), when applied to $Z_{d \times k}$ and $y$. This is an in-sample validation. Use the solver `newton-cg` if the default solver doesn't converge
+    i. First, run standard logistic regression (no regularization) based on ~~$Z_{d \times k}$~~ and $Z_{n \times k}$ `y` (the target vector). Fit (`.fit`) 102 models based on: $k = [1, 2, ..., 101, 102]$ and $d = 102$. For each fit get the classification accuracy, (`.score`), when applied to ~~$Z_{d \times k}$~~ and $Z_{n \times k}$ and $y$. This is an in-sample validation. Use the solver `newton-cg` if the default solver doesn't converge
     ii. Make a plot with the number of principal components on the _x_-axis and classification accuracy on the _y_-axis - what is the general trend and why is this so?
     iii. In terms of classification accuracy, what is the effect of adding the five last components? Why do you think this is so?
 2) Now, we are going to use cross-validation - we are using `cross_val_score` and `StratifiedKFold` from `sklearn.model_selection`

@@ -1,0 +1,119 @@
+---
+title: "practical_exercise_5, Methods 3, 2021, autumn semester"
+author: '[FILL IN YOUR NAME]'
+date: "[FILL IN THE DATE]"
+output: pdf_document
+---
+
+<style type="text/css">
+  body{
+  font-size: 14pt;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Exercises and objectives
+The objectives of the exercises of this assignment are based on: https://doi.org/10.1016/j.concog.2019.03.007  
+  
+4) Download and organise the data from experiment 1  
+5) Use log-likelihood ratio tests to evaluate logistic regression models  
+6) Test linear hypotheses  
+7) Estimate psychometric functions for the Perceptual Awareness Scale and evaluate them  
+
+REMEMBER: In your report, make sure to include code that can reproduce the answers requested in the exercises below (__MAKE A KNITTED VERSION__)  
+REMEMBER: This is part 2 of Assignment 2 and will be part of your final portfolio
+
+
+# EXERCISE 4 - Download and organise the data from experiment 1
+
+Go to https://osf.io/ecxsj/files/ and download the files associated with Experiment 1 (there should be 29).  
+The data is associated with Experiment 1 of the article at the following DOI https://doi.org/10.1016/j.concog.2019.03.007  
+  
+1) Put the data from all subjects into a single data frame - note that some of the subjects do not have the _seed_ variable. For these subjects, add this variable and make in _NA_ for all observations. (The _seed_ variable will not be part of the analysis and is not an experimental variable)  
+    i. Factorise the variables that need factorising  
+    ii. Remove the practice trials from the dataset (see the _trial.type_ variable)  
+    iii. Create a _correct_ variable  
+    iv. Describe how the _target.contrast_ and _target.frames_ variables differ compared to the data from part 1 of this assignment  
+
+
+# EXERCISE 5 - Use log-likelihood ratio tests to evaluate logistic regression models
+
+1) Do logistic regression - _correct_ as the dependent variable and _target.frames_ as the independent variable. (Make sure that you understand what _target.frames_ encode). Create two models - a pooled model and a partial-pooling model. The partial-pooling model should include a subject-specific intercept.  
+    i. the likelihood-function for logistic regression is: $L(p)={\displaystyle\prod_{i=1}^Np^{y_i}(1-p)^{(1-y_i)}}$ (Remember the probability mass function for the Bernoulli Distribution). Create a function that calculates the likelihood.  
+    ii. the log-likelihood-function for logistic regression is: $l(p) = {\displaystyle\sum_{i=1}^N}[y_i\ln{p}+(1-y_i)\ln{(1-p)}$. Create a function that calculates the log-likelihood  
+    iii. apply both functions to the pooling model you just created. Make sure that the log-likelihood matches what is returned from the _logLik_ function for the pooled model. Does the likelihood-function return a value that is surprising? Why is the log-likelihood preferable when working with computers with limited precision?  
+    iv. now show that the log-likelihood is a little off when applied to the partial pooling model - (the likelihood function is different for the multilevel function - see section 2.1 of https://www.researchgate.net/profile/Douglas-Bates/publication/2753537_Computational_Methods_for_Multilevel_Modelling/links/00b4953b4108d73427000000/Computational-Methods-for-Multilevel-Modelling.pdf if you are interested)  
+2) Use log-likelihood ratio tests to argue for the addition of predictor variables, start from the null model, `glm(correct ~ 1, 'binomial', data)`, then add subject-level intercepts, then add a group-level effect of _target.frames_ and finally add subject-level slopes for _target.frames_. Also assess whether or not a correlation between the subject-level slopes and the subject-level intercepts should be included.
+    i. write a short methods section and a results section where you indicate which model you chose and the statistics relevant for that choice. Include a plot of the estimated group-level function with `xlim=c(0, 8)` that includes the estimated subject-specific functions.
+    ii. also include in the results section whether the fit didn't look good for any of the subjects. If so, identify those subjects in the report, and judge (no statistical test) whether their performance (accuracy) differed from that of the other subjects. Was their performance better than chance? (Use a statistical test this time) (50 %)  
+3) Now add _pas_ to the group-level effects - if a log-likelihood ratio test justifies this, also add the interaction between _pas_ and _target.frames_ and check whether a log-likelihood ratio test justifies this  
+    i. if your model doesn't converge, try a different optimizer  
+    ii. plot the estimated group-level functions over `xlim=c(0, 8)` for each of the four PAS-ratings - add this plot to your report (see: 5.2.i) and add a description of your chosen model. Describe how _pas_ affects accuracy together with target duration if at all. Also comment on the estimated functions' behaviour at target.frame=0 - is that behaviour reasonable?  
+
+# EXERCISE 6 - Test linear hypotheses
+
+In this section we are going to test different hypotheses. We assume that we have already proved that more objective evidence (longer duration of stimuli) is sufficient to increase accuracy in and of itself and that more subjective evidence (higher PAS ratings) is also sufficient to increase accuracy in and of itself.  
+We want to test a hypothesis for each of the three neighbouring differences in PAS, i.e. the difference between 2 and 1, the difference between 3 and 2 and the difference between 4 and 3. More specifically, we want to test the hypothesis that accuracy increases faster with objective evidence if subjective evidence is higher at the same time, i.e. we want to test for an interaction.  
+
+1) Fit a model based on the following formula: `correct ~ pas * target.frames + (target.frames | subject))`
+    i. First, use `summary` (yes, you are allowed to!) to argue that accuracy increases faster with objective evidence for PAS 2 than for PAS 1. 
+2) `summary` won't allow you to test whether accuracy increases faster with objective evidence for PAS 3 than for PAS 2 (unless you use `relevel`, which you are not allowed to in this exercise). Instead, we'll be using the function `glht` from the `multcomp` package
+    i. To redo the test in 6.1.i, you can create a _contrast_ vector. This vector will have the length of the number of estimated group-level effects and any specific contrast you can think of can be specified using this. For redoing the test from 6.1.i, the code snippet below will do
+    ii. Now test the hypothesis that accuracy increases faster with objective evidence for PAS 3 than for PAS 2.
+    iii. Also test the hypothesis that accuracy increases faster with objective evidence for PAS 4 than for PAS 3
+3) Finally, test that whether the difference between PAS 2 and 1 (tested in 6.1.i) is greater than the difference between PAS 4 and 3 (tested in 6.2.iii)
+
+### Snippet for 6.2.i
+```{r, eval=FALSE}
+## testing whether PAS 2 is different from PAS 1
+contrast.vector <- matrix(c(0, 0, 0, 0, 0, 1, 0, 0), nrow=1)
+gh <- glht(pas.intact.tf.ranslopeint.with.corr, contrast.vector)
+print(summary(gh))
+## as another example, we could also test whether there is a difference in
+## intercepts between PAS 2 and PAS 3
+contrast.vector <- matrix(c(0, -1, 1, 0, 0, 0, 0, 0), nrow=1)
+gh <- glht(pas.intact.tf.ranslopeint.with.corr, contrast.vector)
+print(summary(gh))
+```
+
+# EXERCISE 7 - Estimate psychometric functions for the Perceptual Awareness Scale and evaluate them  
+
+We saw in 5.3 that the estimated functions went below chance at a target duration of 0 frames (0 ms). This does not seem reasonable, so we will be trying a different approach for fitting here.  
+We will fit the following function that results in a sigmoid, $f(x) = a + \frac {b - a} {1 + e^{\frac {c-x} {d}}}$  
+It has four parameters: _a_, which can be interpreted as the minimum accuracy level, _b_, which can be interpreted as the maximum accuracy level, _c_, which can be interpreted as the so-called inflexion point, i.e. where the derivative of the sigmoid reaches its maximum and _d_, which can be interpreted as the steepness at the inflexion point. (When _d_ goes towards infinity, the slope goes towards a straight line, and when it goes towards 0, the slope goes towards a step function).  
+  
+We can define a function of a residual sum of squares as below
+
+```{r, eval=FALSE}
+RSS <- function(dataset, par)
+{
+    ## "dataset" should be a data.frame containing the variables x (target.frames)
+    ## and y (correct)
+    
+    ## "par" are our four parameters (a numeric vector) 
+    ## par[1]=a, par[2]=b, par[3]=c, par[4]=d
+    x <- dataset$x
+    y <- dataset$y
+    y.hat <- ## you fill in the estimate of y.hat
+    RSS <- sum((y - y.hat)^2)
+    return(RSS)
+}
+```
+
+1) Now, we will fit the sigmoid for the four PAS ratings for Subject 7
+    i. use the function `optim`. It returns a list that among other things contains the four estimated parameters. You should set the following arguments:  
+    `par`: you can set _c_ and _d_ as 1. Find good choices for _a_ and _b_ yourself (and argue why they are appropriate)  
+    `fn`: which function to minimise?  
+    `data`: the data frame with _x_, _target.frames_, and _y_, _correct_ in it  
+    `method`: 'L-BFGS-B'  
+    `lower`: lower bounds for the four parameters, (the lowest value they can take), you can set _c_ and _d_ as `-Inf`. Find good choices for _a_ and _b_ yourself (and argue why they are appropriate)  
+    `upper`: upper bounds for the four parameters, (the highest value they can take) can set _c_ and _d_ as `Inf`. Find good choices for _a_ and _b_ yourself (and argue why they are appropriate)    
+    ii. Plot the fits for the PAS ratings on a single plot (for subject 7) `xlim=c(0, 8)`
+    iii. Create a similar plot for the PAS ratings on a single plot (for subject 7), but this time based on the model from 6.1 `xlim=c(0, 8)`   
+    iv. Comment on the differences between the fits - mention some advantages and disadvantages of each way  
+2) Finally, estimate the parameters for all subjects and each of their four PAS ratings. Then plot the estimated function at the group-level by taking the mean for each of the four parameters, _a_, _b_, _c_ and _d_ across subjects. A function should be estimated for each PAS-rating (it should look somewhat similar to Fig. 3 from the article:  https://doi.org/10.1016/j.concog.2019.03.007)
+    i. compare with the figure you made in 5.3.ii and comment on the differences between the fits - mention some advantages and disadvantages of both.
+    
